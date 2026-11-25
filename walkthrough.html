@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Barkgatan 3 — Förstapersons Interiörvandring (365mm Ytong · Överljus Spa · Dual AC)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+  body { overflow: hidden; background: #0f172a; color: #f8fafc; touch-action: none; }
+  #vp { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+
+  /* Left Control HUD */
+  #hud {
+    position: fixed; top: 12px; left: 12px; width: 334px; max-height: calc(100dvh - 24px); overflow-y: auto;
+    background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 14px; padding: 11px 13px; box-shadow: 0 12px 32px rgba(0,0,0,0.45); z-index: 20;
+    transition: transform 0.22s ease;
+  }
+  #hud.collapsed { transform: translateX(calc(-100% - 20px)); }
+  #toggle-hud {
+    position: fixed; top: 12px; left: 12px; z-index: 25; display: none;
+    background: rgba(15,23,42,0.92); color: #38bdf8; border: 1px solid #38bdf8; border-radius: 9px;
+    padding: 8px 11px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  body.hud-hidden #toggle-hud { display: block; }
+
+  .top-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 3px; }
+  h1 { font-size: 14.5px; font-weight: 700; color: #f8fafc; }
+  .hide-btn { background: #1e293b; color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer; }
+  .sub { font-size: 11px; color: #94a3b8; margin-bottom: 7px; line-height: 1.35; }
+  .back-link {
+    display: inline-block; width: 100%; text-align: center; text-decoration: none; background: #1e293b;
+    color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); border-radius: 7px; padding: 5px 8px;
+    font-size: 11.2px; font-weight: 600; margin-bottom: 5px;
+  }
+  .sec { margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(148,163,184,0.18); }
+  .stitle { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #38bdf8; font-weight: 700; margin-bottom: 5px; }
+
+  .seg-col { display: flex; flex-direction: column; gap: 4px; }
+  .seg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .tp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+
+  button.ctrl {
+    background: #1e293b; color: #e2e8f0; border: 1px solid rgba(148,163,184,0.28); border-radius: 7px;
+    padding: 5.5px 7.5px; font-size: 11px; cursor: pointer; text-align: left; transition: 0.14s;
+  }
+  button.ctrl:hover { background: #334155; border-color: #38bdf8; }
+  button.ctrl.active { background: #0284c7; border-color: #7dd3fc; color: #ffffff; font-weight: 700; }
+  button.ctrl.center { text-align: center; }
+  button.ctrl.span2 { grid-column: span 2; }
+  button.ctrl.stop-btn { background: #3f1d2e; border-color: #f43f5e; color: #ffe4e6; font-weight: 700; text-align: center; margin-top: 4px; }
+  button.ctrl.stop-btn:hover { background: #881337; }
+  button.door-btn.open { background: #065f46; border-color: #34d399; color: #ecfdf5; font-weight: 600; }
+
+  /* Room & Pose Pill */
+  #room-pill {
+    position: fixed; top: 12px; right: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px);
+    border: 1px solid rgba(148,163,184,0.28); border-radius: 999px; padding: 7px 14px; font-size: 12px;
+    font-weight: 600; color: #e2e8f0; z-index: 18; pointer-events: none;
+  }
+  #room-pill b { color: #4ade80; }
+
+  /* On-Screen Mobile / Tablet Walk Pad */
+  #walk-pad {
+    position: fixed; bottom: 16px; right: 16px; display: grid; grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(2, 44px); gap: 5px; z-index: 20;
+  }
+  #walk-pad button {
+    background: rgba(15,23,42,0.86); color: #f8fafc; border: 1px solid rgba(148,163,184,0.4);
+    border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; backdrop-filter: blur(8px);
+  }
+  #walk-pad button:active { background: #0284c7; border-color: #7dd3fc; }
+
+  #help-bar {
+    position: fixed; bottom: 14px; left: 358px; background: rgba(15,23,42,0.78); padding: 6px 11px;
+    border-radius: 8px; font-size: 11px; color: #cbd5e1; border: 1px solid rgba(148,163,184,0.2); z-index: 15;
+  }
+  @media (max-width: 760px) {
+    #hud { width: 288px; max-height: 62dvh; }
+    #help-bar { display: none; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="vp"></div>
+<button id="toggle-hud" onclick="toggleHud(false); this.blur();">☰ Kontroller & Rum</button>
+<div id="room-pill">Rum: <b id="lbl-room">Master Sovrum</b> · Ögonhöjd 1,65 m</div>
+
+<div id="hud">
+  <div class="top-row">
+    <h1>Barkgatan 3 — Interiörvandring</h1>
+    <button class="hide-btn" onclick="toggleHud(true); this.blur();" title="Dölj panel">✕ Dölj</button>
+  </div>
+  <div class="sub">365 mm Ytong (3,985 × 8,60 m inv.) · 1957 röd tegelvägg · 180×50 överljus N · Vikdörrstvätt · Dual AC</div>
+  <a class="back-link" href="index.html">← Tillbaka till Utvändig 3D & 1:1 Trädgårds-AR</a>
+
+  <div class="sec">
+    <div class="stitle">1. Tak- & Ryggåsvalv i Sovrum (Live-växling)</div>
+    <div class="seg-col" id="ceil-btns">
+      <button class="ctrl active" data-c="open45" onclick="setCeiling('open45'); this.blur();">45,0° Öppen Limtränock (~4,15 m)</button>
+      <button class="ctrl" data-c="scis45" onclick="setCeiling('scis45'); this.blur();">45,0° Saxtakstol (~3,50 m)</button>
+      <button class="ctrl" data-c="open30" onclick="setCeiling('open30'); this.blur();">30,0° Öppen Limtränock (~3,41 m)</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="stitle">2. Ljusläge (Skåne Dagsljus vs. E-101 Kväll)</div>
+    <div class="seg-row">
+      <button class="ctrl center active" id="btn-day" onclick="setLighting('day'); this.blur();">☀️ Dagsljus</button>
+      <button class="ctrl center" id="btn-eve" onclick="setLighting('evening'); this.blur();">🌙 Kvällsmys (E-101)</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="stitle">3. Interaktiva Dörrar (Klicka för Öppna / Stäng)</div>
+    <div class="seg-col">
+      <button class="ctrl door-btn open" id="btn-d-bed" onclick="toggleDoor('bed'); this.blur();">🚪 Sovrumsdörr 9M: Öppen</button>
+      <button class="ctrl door-btn open" id="btn-d-bath" onclick="toggleDoor('bath'); this.blur();">🚪 Badrum Skjutdörr 9M (Väst): Öppen</button>
+      <button class="ctrl door-btn" id="btn-d-laun" onclick="toggleDoor('laundry'); this.blur();">🧺 Vikdörrar Tvätt (TS + TM/TT + Vask): Stängd</button>
+      <button class="ctrl door-btn" id="btn-d-patio" onclick="toggleDoor('patio'); this.blur();">🌿 Lyft-Skjutdörr Syd (2,10 m): Stängd</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="stitle">4. Snabbval — Vyplatser (1,65 m Ögonhöjd)</div>
+    <div class="tp-grid">
+      <button class="ctrl" onclick="teleport('bedside'); this.blur();">1. Master — Mot säng</button>
+      <button class="ctrl" onclick="teleport('brick'); this.blur();">2. Mot 1957 tegelvägg</button>
+      <button class="ctrl" onclick="teleport('pergola'); this.blur();">3. Ut mot pergola (2,1m)</button>
+      <button class="ctrl" onclick="teleport('sluss'); this.blur();">4. Sluss / Passage</button>
+      <button class="ctrl span2" onclick="teleport('spa_entry'); this.blur();">5. Spa — Clerestory & Entry (Överljus 18×5 & Kommod)</button>
+      <button class="ctrl" onclick="teleport('spa_center'); this.blur();">6. Spa — Mitt (Ø2000)</button>
+      <button class="ctrl" onclick="teleport('spa_tub'); this.blur();">7. Badkar & Regndusch</button>
+      <button class="ctrl" onclick="teleport('laundry'); this.blur();">8. Vikdörrstvätt & TS</button>
+      <button class="ctrl" onclick="teleport('corridor'); this.blur();">9. Korridor & AC-2</button>
+    </div>
+    <button class="ctrl stop-btn" style="width:100%;" onclick="stopAndReset(); this.blur();">⏹ Stopp / Återställ Rörelse (R)</button>
+  </div>
+</div>
+
+<div id="walk-pad">
+  <div></div>
+  <button data-mv="fwd" title="Gå framåt (W)">▲</button>
+  <div></div>
+  <button data-mv="left" title="Sidsteg vänster (A)">◀</button>
+  <button data-mv="back" title="Gå bakåt (S)">▼</button>
+  <button data-mv="right" title="Sidsteg höger (D)">▶</button>
+</div>
+
+<div id="help-bar">Dra med musen / svep för att se dig omkring · <b>WASD / Pilar</b> för att gå · <b>R</b> = Stopp/Reset · Cirkel-AABB glidkollision</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+window.toggleHud = (hide) => {
+  document.getElementById('hud').classList.toggle('collapsed', hide);
+  document.body.classList.toggle('hud-hidden', hide);
+};
+
+// ---------------------------------------------------------------------------
+// Coordinate Mapping: House (X=East, Y=North, Z=Up above FFL)
+// -> Three.js Y-up: (x = X, y = Z, z = -Y)
+// 365 mm Monolithic Ytong Shell Clear Faces:
+//   X_west_in = -3.985, Y_south_in = 0.365, Y_north_in = 8.965, X_east_protrusion_in = -0.365
+// ---------------------------------------------------------------------------
+const EYE_Y = 1.65;
+const PLAYER_R = 0.24;
+const XW_IN = -3.985;
+const YS_IN = 0.365;
+const YN_IN = 8.965;
+const XE_PROT_IN = -0.365;
+
+const vp = document.getElementById('vp');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcce4fa);
+scene.fog = new THREE.FogExp2(0xcce4fa, 0.011);
+
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.06, 120);
+camera.rotation.order = 'YXZ';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+vp.appendChild(renderer.domElement);
+
+// ---------------------------------------------------------------------------
+// Procedural High-Resolution HTML5 Canvas PBR Textures (Zero External Assets!)
+// ---------------------------------------------------------------------------
+function makeCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+function finishTex(canvas, repX, repY, isSRGB = true) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repX, repY);
+  t.anisotropy = 8;
+  if (isSRGB) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// 1. Authentic 1957 Skåne Red-Brick Running-Bond Texture
+function createBrickPBR(repX, repY) {
+  const W = 1024, H = 1024;
+  const alb = makeCanvas(W, H), bmp = makeCanvas(W, H);
+  const ca = alb.getContext('2d'), cb = bmp.getContext('2d');
+
+  ca.fillStyle = '#cfc5b4'; ca.fillRect(0, 0, W, H);
+  cb.fillStyle = '#262626'; cb.fillRect(0, 0, W, H);
+
+  const rows = 16, cols = 4;
+  const bh = H / rows, bw = W / cols;
+  const mortar = 10;
+  let seed = 1957;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+  for (let r = 0; r < rows; r++) {
+    const off = (r % 2) * (bw * 0.5);
+    for (let c = -1; c <= cols; c++) {
+      const x = c * bw + off + mortar * 0.5;
+      const y = r * bh + mortar * 0.5;
+      const w = bw - mortar, h = bh - mortar;
+      const v = rnd();
+      const R = Math.floor(152 + v * 42 - (rnd() > 0.84 ? 28 : 0));
+      const G = Math.floor(62 + v * 24);
+      const B = Math.floor(42 + v * 16);
+      ca.fillStyle = `rgb(${R},${G},${B})`;
+      ca.fillRect(x, y, w, h);
+
+      for (let k = 0; k < 26; k++) {
+        const sx = x + rnd() * w, sy = y + rnd() * h;
+        ca.fillStyle = rnd() > 0.5 ? 'rgba(40,15,10,0.12)' : 'rgba(235,185,145,0.09)';
+        ca.fillRect(sx, sy, 6 + rnd() * 14, 3 + rnd() * 6);
+      }
+      cb.fillStyle = `rgb(${195 + Math.floor(rnd() * 45)},${195 + Math.floor(rnd() * 45)},${195 + Math.floor(rnd() * 45)})`;
+      cb.fillRect(x + 1, y + 1, w - 2, h - 2);
+    }
+  }
+  return new THREE.MeshStandardMaterial({
+    map: finishTex(alb, repX, repY, true),
+    bumpMap: finishTex(bmp, repX, repY, false),
+    bumpScale: 0.018,
+    roughness: 0.86,
+    metalness: 0.02,
+  });
+}
+
+// 2. Wide-Plank Matte Nordic Oak Flooring
+function createOakFloorPBR(repX, repY) {
+  const W = 1024, H = 1024;
+  const alb = makeCanvas(W, H), bmp = makeCanvas(W, H);
+  const ca = alb.getContext('2d'), cb = bmp.getContext('2d');
+  ca.fillStyle = '#c9a97e'; ca.fillRect(0, 0, W, H);
+  cb.fillStyle = '#b0b0b0'; cb.fillRect(0, 0, W, H);
+
+  const planks = 6;
+  const pw = W / planks;
+  let seed = 4201;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+  for (let p = 0; p < planks; p++) {
+    const x0 = p * pw;
+    const joints = [0, Math.floor((0.28 + rnd() * 0.45) * H), H];
+    for (let j = 0; j < joints.length - 1; j++) {
+      const y0 = joints[j], yh = joints[j+1] - y0;
+      const tone = (rnd() - 0.5) * 18;
+      ca.fillStyle = `rgb(${Math.floor(198 + tone)},${Math.floor(165 + tone * 0.85)},${Math.floor(122 + tone * 0.7)})`;
+      ca.fillRect(x0 + 2, y0 + 2, pw - 4, yh - 4);
+      for (let g = 0; g < 45; g++) {
+        const gx = x0 + 3 + rnd() * (pw - 6);
+        ca.fillStyle = rnd() > 0.5 ? 'rgba(135,98,62,0.11)' : 'rgba(232,208,172,0.10)';
+        ca.fillRect(gx, y0 + 2, 1.5 + rnd() * 2.5, yh - 4);
+      }
+      ca.fillStyle = 'rgba(92,66,40,0.45)';
+      ca.fillRect(x0, y0, 2, yh);
+      ca.fillRect(x0, y0, pw, 2);
+      cb.fillStyle = '#383838';
+      cb.fillRect(x0, y0, 2, yh);
+      cb.fillRect(x0, y0, pw, 2);
+    }
+  }
+  return new THREE.MeshStandardMaterial({
+    map: finishTex(alb, repX, repY, true),
+    bumpMap: finishTex(bmp, repX, repY, false),
+    bumpScale: 0.005,
+    roughness: 0.58,
+    metalness: 0.03,
+  });
+}
+
+// 3. Large-Format 60x60 cm Warm Gotland Limestone Tile
+function createLimestoneTilePBR(repX, repY) {
+  const W = 1024, H = 1024;
+  const alb = makeCanvas(W, H), bmp = makeCanvas(W, H);
+  const ca = alb.getContext('2d'), cb = bmp.getContext('2d');
+  ca.fillStyle = '#bfb8ac'; ca.fillRect(0, 0, W, H);
+  cb.fillStyle = '#303030'; cb.fillRect(0, 0, W, H);
+
+  const grid = 4, ts = W / grid, grout = 5;
+  let seed = 8811;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+  for (let gy = 0; gy < grid; gy++) {
+    for (let gx = 0; gx < grid; gx++) {
+      const x = gx * ts + grout * 0.5, y = gy * ts + grout * 0.5, s = ts - grout;
+      const d = (rnd() - 0.5) * 10;
+      ca.fillStyle = `rgb(${Math.floor(214 + d)},${Math.floor(208 + d)},${Math.floor(196 + d)})`;
+      ca.fillRect(x, y, s, s);
+      for (let m = 0; m < 60; m++) {
+        ca.fillStyle = rnd() > 0.5 ? 'rgba(165,156,142,0.12)' : 'rgba(242,238,230,0.14)';
+        ca.beginPath();
+        ca.arc(x + rnd() * s, y + rnd() * s, 4 + rnd() * 18, 0, Math.PI * 2);
+        ca.fill();
+      }
+      cb.fillStyle = '#d8d8d8';
+      cb.fillRect(x, y, s, s);
+    }
+  }
+  return new THREE.MeshStandardMaterial({
+    map: finishTex(alb, repX, repY, true),
+    bumpMap: finishTex(bmp, repX, repY, false),
+    bumpScale: 0.004,
+    roughness: 0.52,
+    metalness: 0.04,
+  });
+}
+
+// 4. Linen / Bouclé Textile
+function createFabricPBR(hexBase, hexWeave) {
+  const W = 512, H = 512, c = makeCanvas(W, H), ctx = c.getContext('2d');
+  ctx.fillStyle = hexBase; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = hexWeave;
+  for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1.5);
+  for (let x = 0; x < W; x += 4) ctx.fillRect(x, 0, 1.5, H);
+  return new THREE.MeshStandardMaterial({
+    map: finishTex(c, 6, 6, true),
+    bumpMap: finishTex(c, 6, 6, false),
+    bumpScale: 0.004,
+    roughness: 0.92,
+  });
+}
+
+const matPlaster = new THREE.MeshStandardMaterial({ color: 0xf5f2ea, roughness: 0.88, side: THREE.DoubleSide });
+const matCeiling = new THREE.MeshStandardMaterial({ color: 0xfaf9f5, roughness: 0.90, side: THREE.DoubleSide });
+const matOakFloor = createOakFloorPBR(2.4, 2.8);
+const matOakJoinery = createOakFloorPBR(1.2, 1.2);
+const matSageJoinery = new THREE.MeshStandardMaterial({ color: 0xcbd5cb, roughness: 0.68, metalness: 0.04 });
+const matLaundryDoor = new THREE.MeshStandardMaterial({ color: 0xded9cf, roughness: 0.62, metalness: 0.04 });
+const matCeramic = new THREE.MeshStandardMaterial({ color: 0xfbfcfd, roughness: 0.16, metalness: 0.05 });
+const matAppliance = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.26, metalness: 0.10 });
+const matBrass = new THREE.MeshStandardMaterial({ color: 0xc8a45d, roughness: 0.26, metalness: 0.82 });
+const matBlackMetal = new THREE.MeshStandardMaterial({ color: 0x22262b, roughness: 0.42, metalness: 0.65 });
+const matGlass = new THREE.MeshPhysicalMaterial({
+  color: 0xdbeafe, transparent: true, opacity: 0.22, roughness: 0.06, metalness: 0.05, depthWrite: false, side: THREE.DoubleSide
+});
+const matInsectMesh = new THREE.MeshBasicMaterial({
+  color: 0x334155, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide
+});
+const matLinenDuvet = createFabricPBR('#ece7dc', 'rgba(180,170,154,0.18)');
+const matHeadboard = createFabricPBR('#cfc5b4', 'rgba(135,124,108,0.22)');
+const matRug = createFabricPBR('#ddd5c7', 'rgba(150,138,120,0.24)');
+
+function addHouseBox(parent, x1, y1, z1, x2, y2, z2, mat, castShadow = true, receiveShadow = true) {
+  const dx = x2 - x1, dy = z2 - z1, dz = y2 - y1;
+  const geo = new THREE.BoxGeometry(dx, dy, dz);
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set((x1 + x2) / 2, (z1 + z2) / 2, -(y1 + y2) / 2);
+  m.castShadow = castShadow;
+  m.receiveShadow = receiveShadow;
+  parent.add(m);
+  return m;
+}
+
+// ---------------------------------------------------------------------------
+// Build Full Interior & Outdoor Context Scene (365 mm Monolithic Ytong Shell)
+// ---------------------------------------------------------------------------
+const root = new THREE.Group();
+scene.add(root);
+
+// 1. Outdoor Garden, Lawn, SW Deck, Matte-Black Pergola & Bamboo
+const matLawn = new THREE.MeshStandardMaterial({ color: 0x7ea35c, roughness: 0.95 });
+addHouseBox(root, -18, -24, -0.32, 22, 18, -0.30, matLawn, false, true);
+const matDeck = createOakFloorPBR(4, 4);
+addHouseBox(root, -4.55, -3.70, -0.16, 6.80, 0.00, -0.04, matDeck, false, true);
+for (const px of [-4.50, -2.28, -0.12]) {
+  addHouseBox(root, px, -3.58, -0.30, px + 0.10, -3.48, 2.30, matBlackMetal);
+  if (px < -0.2) addHouseBox(root, px, -0.65, -0.30, px + 0.10, -0.55, 2.30, matBlackMetal);
+}
+addHouseBox(root, -4.55, -3.56, 2.22, 0.00, -3.48, 2.36, matBlackMetal);
+addHouseBox(root, -4.55, -0.64, 2.22, 0.00, -0.56, 2.36, matBlackMetal);
+for (let i = 0; i < 10; i++) {
+  const rx = -4.50 + i * (4.45 / 9);
+  addHouseBox(root, rx, -3.70, 2.35, rx + 0.05, -0.48, 2.45, matBlackMetal);
+}
+const matFoliage = new THREE.MeshStandardMaterial({ color: 0x4d7c3f, roughness: 0.8 });
+for (let b = 0; b < 14; b++) {
+  const bx = -4.75 + (b % 4) * 0.22, by = -3.3 + Math.floor(b / 4) * 0.55;
+  addHouseBox(root, bx, by, -0.25, bx + 0.04, by + 0.04, 1.85 + (b % 3) * 0.25, matFoliage);
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 8), matFoliage);
+  crown.position.set(bx, 1.75 + (b % 3) * 0.2, -by);
+  root.add(crown);
+}
+// Soft green garden hedge / foliage visible outside the North 180x50 cm bathroom clerestory window (at distance)
+for (let nb = 0; nb < 8; nb++) {
+  const nx = -4.3 + nb * 0.45;
+  const bush = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), matFoliage);
+  bush.position.set(nx, 1.55 + (nb % 2) * 0.18, -12.1);
+  root.add(bush);
+}
+
+// 2. Floors: Oak in Master Bedroom, Sluss, Open Corridor & Kontor; 60x60 Limestone in Spa & Laundry
+addHouseBox(root, XW_IN, YS_IN, -0.05, 0.00, 4.73, 0.00, matOakFloor, false, true);
+addHouseBox(root, 0.00, 3.23, -0.05, 6.95, 4.45, 0.00, matOakFloor, false, true);
+addHouseBox(root, 0.25, 4.57, -0.05, 2.62, 7.38, 0.00, createOakFloorPBR(1.5, 1.8), false, true);
+const matSpaFloor = createLimestoneTilePBR(2.2, 2.2);
+addHouseBox(root, XW_IN, 4.95, -0.05, 0.00, YN_IN, 0.00, matSpaFloor, false, true);
+
+// 3. Preserved 1957 Red-Brick Feature Wall (X=0.00..0.25, Y=0.00..7.53 with doorway Y=3.35..4.35, Z=0..2.15)
+const matBrickSouth = createBrickPBR(2.2, 2.2);
+const matBrickNorth = createBrickPBR(2.0, 1.8);
+addHouseBox(root, 0.00, 0.00, 0.00, 0.25, 3.35, 4.25, matBrickSouth);
+addHouseBox(root, 0.00, 3.35, 2.15, 0.25, 4.35, 4.25, createBrickPBR(0.7, 1.3));
+addHouseBox(root, 0.00, 4.35, 0.00, 0.25, 7.53, 4.25, matBrickNorth);
+
+// 4. Monolithic 365 mm Ytong Exterior Shell (X=-4.35..0.00, Y=0.00..9.33)
+addHouseBox(root, -4.35, 0.00, 0.00, XW_IN, 9.33, 2.65, matPlaster); // West 365 mm REI 60 Ytong wall
+addHouseBox(root, XE_PROT_IN, 7.53, 0.00, 0.00, YN_IN, 2.65, matPlaster); // East north-protrusion 365 mm Ytong wall
+
+// North 365 mm Ytong wall split around High 180 x 50 cm Clerestory Window (X=-3.85..-2.05, Z=1.85..2.35 m)
+addHouseBox(root, XW_IN, YN_IN, 0.00, -3.85, 9.33, 2.65, matPlaster);
+addHouseBox(root, -2.05, YN_IN, 0.00, 0.00,  9.33, 2.65, matPlaster);
+addHouseBox(root, -3.85, YN_IN, 0.00, -2.05, 9.33, 1.85, matPlaster);
+addHouseBox(root, -3.85, YN_IN, 2.35, -2.05, 9.33, 2.65, matPlaster); // Reinforced lintel + U-block ring beam zone
+// Clerestory 180x50 cm Frame & Fixed 3-Glass Pane (deep 365 mm reveal!)
+addHouseBox(root, -3.85, 9.10, 1.85, -2.05, 9.20, 1.90, matAppliance);
+addHouseBox(root, -3.85, 9.10, 2.30, -2.05, 9.20, 2.35, matAppliance);
+addHouseBox(root, -3.85, 9.10, 1.90, -3.80, 9.20, 2.30, matAppliance);
+addHouseBox(root, -2.10, 9.10, 1.90, -2.05, 9.20, 2.30, matAppliance);
+addHouseBox(root, -3.85, YN_IN - 0.01, 1.835, -2.05, 9.12, 1.855, matCeramic); // Crisp stone sill inside reveal
+addHouseBox(root, -3.80, 9.14, 1.90, -2.10, 9.16, 2.30, matGlass, false, false);
+
+// South 365 mm Ytong wall split into:
+//   - 2.10 m Lift-and-Slide Patio Door (X=-3.62..-1.52, Z=0.00..2.20)
+//   - 0.80 m Tilt-and-Turn (Dreh-Kipp) Ventilation Window w/ Insect Screen (X=-1.52..-0.72, Z=0.85..2.20)
+addHouseBox(root, XW_IN, 0.00, 0.00, -3.62, YS_IN, 2.65, matPlaster);
+addHouseBox(root, -0.72, 0.00, 0.00, 0.00,  YS_IN, 2.65, matPlaster);
+addHouseBox(root, -3.62, 0.00, 2.20, -0.72, YS_IN, 2.65, matPlaster); // Continuous 2.90 m factory lintel
+addHouseBox(root, -1.52, 0.00, 0.00, -0.72, YS_IN, 0.85, matPlaster); // Spandrel below 0.80 m dreh-kipp window
+addHouseBox(root, -1.52, 0.16, 0.84, -0.72, YS_IN + 0.02, 0.87, matOakJoinery); // Deep oak windowsill inside 365mm reveal
+
+// 2.10 m Lift-and-Slide Door Frame + Fixed West Pane (-3.62..-2.57) + Animated Sliding East Leaf (-2.57..-1.52)
+addHouseBox(root, -3.62, 0.13, 0.00, -1.52, 0.23, 0.04, matBlackMetal);
+addHouseBox(root, -3.62, 0.13, 2.15, -1.52, 0.23, 2.20, matBlackMetal);
+addHouseBox(root, -3.62, 0.13, 0.04, -3.57, 0.23, 2.15, matBlackMetal);
+addHouseBox(root, -1.57, 0.13, 0.00, -1.50, 0.24, 2.20, matBlackMetal); // Coupling mullion at X=-1.52
+addHouseBox(root, -2.60, 0.13, 0.04, -2.55, 0.17, 2.15, matBlackMetal);
+addHouseBox(root, -3.57, 0.145, 0.05, -2.60, 0.16, 2.14, matGlass, false, false);
+
+const patioSliderLeaf = new THREE.Group();
+root.add(patioSliderLeaf);
+addHouseBox(patioSliderLeaf, -2.57, 0.18, 0.04, -2.52, 0.22, 2.15, matBlackMetal);
+addHouseBox(patioSliderLeaf, -1.61, 0.18, 0.04, -1.56, 0.22, 2.15, matBlackMetal);
+addHouseBox(patioSliderLeaf, -2.57, 0.18, 0.04, -1.56, 0.22, 0.09, matBlackMetal);
+addHouseBox(patioSliderLeaf, -2.57, 0.18, 2.10, -1.56, 0.22, 2.15, matBlackMetal);
+addHouseBox(patioSliderLeaf, -2.52, 0.195, 0.09, -1.61, 0.205, 2.10, matGlass, false, false);
+addHouseBox(patioSliderLeaf, -1.65, 0.22, 0.96, -1.63, 0.25, 1.18, matBrass);
+
+// 0.80 m Tilt-and-Turn (Dreh-Kipp) Ventilation Window + Exterior Insect Screen (X=-1.52..-0.72, Z=0.85..2.20)
+addHouseBox(root, -1.52, 0.13, 0.85, -0.72, 0.23, 0.90, matBlackMetal);
+addHouseBox(root, -1.52, 0.13, 2.15, -0.72, 0.23, 2.20, matBlackMetal);
+addHouseBox(root, -0.77, 0.13, 0.90, -0.72, 0.23, 2.15, matBlackMetal);
+addHouseBox(root, -1.48, 0.125, 0.90, -0.77, 0.135, 2.15, matInsectMesh, false, false); // Integrated insect screen
+// Slightly tilted-in Dreh-Kipp sash (tilted ~5° inward at top for passive night cooling look!)
+const dkSash = new THREE.Group();
+dkSash.position.set(-1.125, 0.90, -0.19);
+dkSash.rotation.x = -0.075;
+root.add(dkSash);
+addHouseBox(dkSash, -0.355, -0.015, 0.00,  0.355, 0.015, 0.045, matBlackMetal);
+addHouseBox(dkSash, -0.355, -0.015, 1.20,  0.355, 0.015, 1.245, matBlackMetal);
+addHouseBox(dkSash, -0.355, -0.015, 0.045,-0.310, 0.015, 1.20,  matBlackMetal);
+addHouseBox(dkSash,  0.310, -0.015, 0.045, 0.355, 0.015, 1.20,  matBlackMetal);
+addHouseBox(dkSash, -0.310, -0.005, 0.045, 0.310, 0.005, 1.20,  matGlass, false, false);
+addHouseBox(dkSash,  0.320,  0.015, 0.54,  0.340, 0.045, 0.68,  matBrass);
+
+// 5. Continuous Sound-Insulated North Bedroom Wall (Y=4.73..4.95) & Sluss Walls
+addHouseBox(root, XW_IN, 4.73, 0.00, -1.08, 4.95, 2.55, matPlaster);
+addHouseBox(root, -1.08, 4.73, 2.10, 0.00,  4.95, 2.55, matPlaster);
+addHouseBox(root, -0.18, 4.73, 0.00, 0.00,  4.95, 2.55, matPlaster);
+
+addHouseBox(root, -1.34, 3.20, 0.00, -1.18, 4.73, 2.55, matPlaster);
+addHouseBox(root, -1.34, 3.20, 0.00, -1.08, 3.36, 2.55, matPlaster);
+addHouseBox(root, -0.18, 3.20, 0.00, 0.00,  3.36, 2.55, matPlaster);
+addHouseBox(root, -1.08, 3.20, 2.10, -0.18, 3.36, 2.55, matPlaster);
+// Flat 2.50 m ceilings in Sluss & Spa Bathroom
+addHouseBox(root, -1.34, 3.20, 2.50, 0.00, 4.73, 2.56, matCeiling, false, true);
+addHouseBox(root, XW_IN, 4.95, 2.50, 0.00, YN_IN, 2.58, matCeiling, false, true);
+// Dry Flush UC-Väst Sub-Panel Door inside Sluss West Wall
+addHouseBox(root, -1.185, 3.82, 1.35, -1.165, 4.28, 1.92, matAppliance);
+
+// Existing Open Corridor & Kontor Context + AC-2 Recessed 1-Way Ceiling Cassette (X=0.80, Y=3.85, Z=2.30 m)
+addHouseBox(root, 0.25, 3.13, 0.00, 5.10, 3.23, 2.30, matPlaster);
+addHouseBox(root, 0.25, 4.45, 0.00, 1.035, 4.57, 2.30, matPlaster);
+addHouseBox(root, 1.835, 4.45, 0.00, 2.62, 4.57, 2.30, matPlaster);
+addHouseBox(root, 1.035, 4.45, 2.10, 1.835, 4.57, 2.30, matPlaster);
+addHouseBox(root, 0.42, 4.58, 0.01, 1.24, 4.62, 2.08, matOakJoinery);
+addHouseBox(root, 2.62, 4.45, 0.00, 2.74, 7.38, 2.30, matPlaster);
+addHouseBox(root, 0.25, 7.38, 0.00, 1.20, 7.53, 2.30, matPlaster);
+addHouseBox(root, 2.50, 7.38, 0.00, 5.10, 7.53, 2.30, matPlaster);
+addHouseBox(root, 1.20, 7.38, 0.00, 2.50, 7.53, 0.80, matPlaster);
+addHouseBox(root, 1.20, 7.43, 0.80, 2.50, 7.47, 2.20, matGlass, false, false);
+addHouseBox(root, 0.25, 3.23, 2.30, 5.10, 7.38, 2.36, matCeiling, false, true);
+addHouseBox(root, 1.92, 5.30, 0.72, 2.58, 6.70, 0.76, matOakJoinery);
+addHouseBox(root, 2.35, 5.75, 0.82, 2.42, 6.25, 1.16, matBlackMetal);
+
+// AC-2: Recessed 1-Way Ceiling Cassette (Mitsubishi MLZ-KP35VF) at X=0.80, Y=3.85, Z=2.30 m aimed East!
+addHouseBox(root, 0.30, 3.62, 2.282, 1.30, 4.08, 2.302, matAppliance);
+addHouseBox(root, 0.36, 3.68, 2.276, 1.08, 4.02, 2.283, new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 }));
+addHouseBox(root, 1.13, 3.67, 2.268, 1.24, 4.03, 2.283, matBlackMetal); // Directional East discharge louver
+
+// ---------------------------------------------------------------------------
+// Live Switchable Master Bedroom Vaulted Ceilings & Gable Infills (365 mm Ytong)
+// ---------------------------------------------------------------------------
+function buildVaultVariantGroup(zWall, zPeak, hasGlulam) {
+  const g = new THREE.Group();
+  const xW = XW_IN, xE = 0.00, xM = xW / 2.0;
+  const yS = YS_IN, yN = 4.73;
+
+  function makeSlopeQuad(xa, za, xb, zb, ya, yb) {
+    const pos = new Float32Array([
+      xa, za, -ya,  xb, zb, -ya,  xb, zb, -yb,
+      xa, za, -ya,  xb, zb, -yb,  xa, za, -yb,
+    ]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, matCeiling);
+    m.receiveShadow = true;
+    return m;
+  }
+  g.add(makeSlopeQuad(xW, zWall, xM, zPeak, yS, yN));
+  g.add(makeSlopeQuad(xM, zPeak, xE, zWall, yS, yN));
+
+  for (const yPlane of [yS, yN]) {
+    const pos = new Float32Array([
+      xW, 2.50, -yPlane,  xE, 2.50, -yPlane,  xM, zPeak, -yPlane,
+      xW, 2.50, -yPlane,  xM, zPeak, -yPlane, xW, zWall, -yPlane,
+      xM, zPeak, -yPlane, xE, 2.50, -yPlane,  xE, zWall, -yPlane,
+    ]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo, matPlaster));
+  }
+  const tFrac = Math.abs((-1.26 - xM) / (xE - xM));
+  const zAtSluss = zPeak - tFrac * (zPeak - zWall);
+  addHouseBox(g, -1.34, 3.20, 2.50, -1.18, 4.73, zAtSluss, matPlaster);
+  addHouseBox(g, -1.34, 3.20, 2.50, 0.00,  3.36, zAtSluss, matPlaster);
+
+  if (hasGlulam) {
+    addHouseBox(g, xM - 0.05, yS, zPeak - 0.22, xM + 0.05, yN, zPeak + 0.02, matOakJoinery);
+  }
+  return g;
+}
+
+const ceilingGroups = {
+  open45: buildVaultVariantGroup(2.40, 4.15, true),
+  scis45: buildVaultVariantGroup(2.40, 3.50, false),
+  open30: buildVaultVariantGroup(2.40, 3.41, true),
+};
+Object.values(ceilingGroups).forEach(g => root.add(g));
+ceilingGroups.scis45.visible = false;
+ceilingGroups.open30.visible = false;
+
+window.setCeiling = (key) => {
+  for (const [k, g] of Object.entries(ceilingGroups)) g.visible = (k === key);
+  document.querySelectorAll('#ceil-btns button').forEach(b => b.classList.toggle('active', b.dataset.c === key));
+};
+
+// ---------------------------------------------------------------------------
+// Furnished Master Bedroom + AC-1 Above Wardrobe
+// ---------------------------------------------------------------------------
+addHouseBox(root, -3.90, 0.85, 0.002, -1.35, 3.55, 0.014, matRug, false, true);
+addHouseBox(root, XW_IN, 1.26, 0.00, XW_IN + 0.11, 3.16, 1.18, matHeadboard);
+addHouseBox(root, XW_IN + 0.11, 1.31, 0.04, XW_IN + 2.10, 3.11, 0.30, matOakJoinery);
+addHouseBox(root, XW_IN + 0.13, 1.34, 0.30, XW_IN + 2.08, 3.08, 0.54, matAppliance);
+addHouseBox(root, XW_IN + 0.60, 1.32, 0.33, XW_IN + 2.10, 3.10, 0.58, matLinenDuvet);
+for (const [py1, py2] of [[1.42, 2.14], [2.28, 3.00]]) {
+  addHouseBox(root, XW_IN + 0.16, py1, 0.54, XW_IN + 0.52, py2, 0.70, matAppliance);
+  addHouseBox(root, XW_IN + 0.42, py1 + 0.05, 0.55, XW_IN + 0.72, py2 - 0.05, 0.69, matHeadboard);
+}
+const matEmissiveWarm = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xffb454, emissiveIntensity: 0.4, roughness: 0.3 });
+for (const ny of [0.98, 3.44]) {
+  addHouseBox(root, XW_IN + 0.01, ny - 0.22, 0.36, XW_IN + 0.43, ny + 0.22, 0.50, matOakJoinery);
+  addHouseBox(root, XW_IN + 0.01, ny - 0.05, 0.95, XW_IN + 0.11, ny + 0.05, 1.18, matBrass);
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), matEmissiveWarm);
+  globe.position.set(XW_IN + 0.14, 1.10, -ny);
+  root.add(globe);
+}
+
+// Built-in 2.645 x 0.60 m Acoustic Buffer Wardrobe (X=-3.985..-1.34, Y=4.13..4.73, Z=0..2.38 m)
+addHouseBox(root, XW_IN, 4.13, 0.00, -1.34, 4.73, 2.38, matSageJoinery);
+const wMod = (-1.34 - XW_IN) / 4;
+for (let i = 0; i < 4; i++) {
+  const wx1 = XW_IN + 0.015 + i * wMod, wx2 = wx1 + wMod - 0.025;
+  addHouseBox(root, wx1, 4.115, 0.04, wx2, 4.13, 2.34, matSageJoinery);
+  addHouseBox(root, wx2 - 0.06, 4.095, 0.92, wx2 - 0.035, 4.115, 1.32, matOakJoinery);
+}
+// AC-1: Master Bedroom Wall-Mounted Unit high above Wardrobe (X=-2.65, Y=4.73, Z=2.48 m) blowing South!
+addHouseBox(root, -3.05, 4.50, 2.42, -2.25, 4.73, 2.69, matAppliance);
+addHouseBox(root, -3.01, 4.49, 2.435,-2.29, 4.505,2.465, matBlackMetal); // Whisper-quiet 19 dB(A) discharge vane
+// Directional TL-MB Dysdon Nozzle Diffuser above Sluss Bedroom Door
+addHouseBox(root, -0.72, 3.17, 2.24, -0.38, 3.20, 2.36, matAppliance);
+
+// ---------------------------------------------------------------------------
+// Redesigned Open-Entry Spa Bathroom & 2.425 m Bifold Laundry
+// ---------------------------------------------------------------------------
+const matWallTile = createLimestoneTilePBR(2.0, 1.2);
+// Wet-zone limestone wall tiling (cut around North Clerestory Window X=-3.85..-2.05, Z=1.85..2.35!)
+addHouseBox(root, XW_IN, 6.90, 0.00, XW_IN + 0.025, YN_IN, 2.50, matWallTile);
+addHouseBox(root, XW_IN, YN_IN - 0.025, 0.00, -3.85, YN_IN, 2.50, matWallTile);
+addHouseBox(root, -2.05, YN_IN - 0.025, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
+addHouseBox(root, -3.85, YN_IN - 0.025, 0.00, -2.05, YN_IN, 1.85, matWallTile);
+addHouseBox(root, -3.85, YN_IN - 0.025, 2.35, -2.05, YN_IN, 2.50, matWallTile);
+addHouseBox(root, XE_PROT_IN - 0.025, 7.53, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
+
+// 1. East Floating 130 cm Ribbed-Oak Double Vanity FLUSH against Preserved 1957 Red-Brick Wall (Y=6.20..7.50, X=-0.50..0.00)
+addHouseBox(root, -0.50, 6.20, 0.26, 0.00, 7.50, 0.82, matOakJoinery);
+addHouseBox(root, -0.52, 6.18, 0.82, 0.00, 7.52, 0.88, matCeramic);
+const matMirror = new THREE.MeshStandardMaterial({ color: 0xd8e6f2, roughness: 0.04, metalness: 0.92 });
+const matMirrorHalo = new THREE.MeshStandardMaterial({ color: 0xfff4d8, emissive: 0xffbe6b, emissiveIntensity: 0.5 });
+for (const vy of [6.52, 7.18]) {
+  addHouseBox(root, -0.14, vy - 0.02, 0.88, -0.10, vy + 0.02, 1.05, matBrass);
+  addHouseBox(root, -0.25, vy - 0.015, 1.02, -0.11, vy + 0.015, 1.05, matBrass);
+  addHouseBox(root, -0.025, vy - 0.26, 1.18, -0.005, vy + 0.26, 2.04, matMirrorHalo, false, false);
+  addHouseBox(root, -0.040, vy - 0.24, 1.20, -0.020, vy + 0.24, 2.02, matMirror, false, false);
+}
+
+// 2. NW Corner 170 x 80 cm Bathtub directly beneath the 180 x 50 cm North Clerestory Window (X=-3.95..-2.25, Y=8.15..8.95)
+addHouseBox(root, -3.95, 8.15, 0.00, -2.25, 8.95, 0.58, matCeramic);
+addHouseBox(root, -3.83, 8.25, 0.44, -2.37, 8.85, 0.59, new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.12 }));
+addHouseBox(root, -3.12, 8.89, 0.58, -3.08, 8.93, 0.74, matBrass);
+
+// 3. NE Corner Walk-In Rain Shower (100 x 135 cm, X=-1.36..-0.365, Y=7.62..8.965) + 65W Brass Towel Warmer
+addHouseBox(root, -1.37, 7.98, 0.00, -1.34, YN_IN, 2.10, matGlass, false, false);
+addHouseBox(root, -1.38, 7.98, 2.08, -1.33, YN_IN, 2.11, matBrass);
+addHouseBox(root, XE_PROT_IN - 0.06, 8.27, 1.05, XE_PROT_IN - 0.02, 8.33, 2.18, matBrass);
+addHouseBox(root, XE_PROT_IN - 0.42, 8.17, 2.16, XE_PROT_IN - 0.04, 8.43, 2.19, matBrass);
+// Electric Towel Warmer (65W) on North Pier (X=-1.82..-1.62, Y=8.93) between Bathtub & Shower
+addHouseBox(root, -1.82, 8.91, 0.78, -1.79, 8.95, 1.75, matBrass);
+addHouseBox(root, -1.65, 8.91, 0.78, -1.62, 8.95, 1.75, matBrass);
+for (let tr = 0; tr < 5; tr++) {
+  addHouseBox(root, -1.82, 8.90, 0.90 + tr * 0.18, -1.62, 8.93, 0.92 + tr * 0.18, matBrass);
+}
+
+// 4. Repositioned Private West Wall-Hung WC at Y=7.40 (X=-3.985..-3.35, Y=7.05..7.75) on 1.15 m West Ledge (Y=6.95..8.10)
+addHouseBox(root, XW_IN, 6.95, 0.00, -3.80, 8.10, 1.15, matWallTile);
+addHouseBox(root, XW_IN, 6.94, 1.14, -3.79, 8.11, 1.17, matCeramic);
+addHouseBox(root, -3.80, 7.21, 0.10, -3.35, 7.59, 0.42, matCeramic);
+addHouseBox(root, -3.76, 7.20, 0.42, -3.34, 7.60, 0.45, matCeramic);
+addHouseBox(root, -3.805, 7.29, 0.88, -3.785, 7.51, 1.03, matBrass); // Geberit Sigma flush plate
+
+// 5. Shortened 2.425 m Concealed Laundry Alcove (X=-3.985..-1.56, Y=4.95..5.65, cheek wall X=-1.56..-1.48):
+//    60x60 TS VP (-3.96..-3.36) + Stacked TM+TT (-3.34..-2.74) + 1.16 m Sink/Counter & UFH cab (-2.72..-1.56)
+addHouseBox(root, -1.56, 4.95, 0.00, -1.48, 5.67, 2.50, matPlaster); // Cheek wall
+addHouseBox(root, XW_IN, 5.62, 2.18, -1.48, 5.68, 2.50, matPlaster); // Bifold header
+// 60x60 Heat-Pump Drying Cabinet (TS VP) on West (-3.96..-3.36)
+addHouseBox(root, -3.96, 4.98, 0.00, -3.36, 5.58, 1.95, matAppliance);
+addHouseBox(root, -3.76, 5.58, 1.82, -3.56, 5.595, 1.88, matBlackMetal);
+addHouseBox(root, -3.42, 5.58, 0.90, -3.39, 5.61, 1.35, matBlackMetal);
+// Stacked TM + TT Column (60x60 at -3.34..-2.74)
+addHouseBox(root, -3.34, 4.98, 0.00, -2.74, 5.58, 0.85, matAppliance); // TM bottom
+addHouseBox(root, -3.34, 4.98, 0.85, -2.74, 5.60, 0.89, matOakJoinery); // Pull-out oak folding shelf
+addHouseBox(root, -3.34, 4.98, 0.89, -2.74, 5.58, 1.74, matAppliance); // TT top
+for (const dz of [0.46, 1.34]) {
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 24), matBlackMetal);
+  drum.rotation.x = Math.PI / 2;
+  drum.position.set(-3.04, dz, -5.585);
+  root.add(drum);
+}
+// 1.16 m Laundry Sink + Oak Folding Counter + Säker Vatten Secondary UFH Cabinet underneath (-2.72..-1.56)
+addHouseBox(root, -2.72, 4.98, 0.00, -1.57, 5.58, 0.85, matSageJoinery);
+addHouseBox(root, -2.44, 5.58, 0.08, -1.86, 5.595, 0.68, matAppliance); // Säker Vatten UFH manifold access hatch
+addHouseBox(root, -2.73, 4.96, 0.85, -1.56, 5.61, 0.89, matOakJoinery); // 1.16 m oak counter
+addHouseBox(root, -2.12, 5.08, 0.89, -1.68, 5.48, 0.905, matBlackMetal); // Inset laundry sink
+addHouseBox(root, -1.90, 5.02, 0.89, -1.87, 5.05, 1.14, matBrass);
+addHouseBox(root, -2.72, 4.98, 1.48, -1.57, 5.32, 1.52, matOakJoinery); // Upper detergent/linen shelf
+
+// ---------------------------------------------------------------------------
+// Interactive Animated Doors (Bedroom 9M, Bathroom West Pocket 9M, 4-Leaf Bifold Laundry, 2.10m Patio Slider)
+// ---------------------------------------------------------------------------
+const doorState = { bed: true, bath: true, laundry: false, patio: false };
+
+// 1. Bedroom 9M Acoustic Door (pivots at X=-0.18, Y=3.28)
+const bedDoorPivot = new THREE.Group();
+bedDoorPivot.position.set(-0.18, 0, -3.28);
+root.add(bedDoorPivot);
+addHouseBox(bedDoorPivot, -0.90, -0.02, 0.01, 0.00, 0.02, 2.09, matOakJoinery);
+addHouseBox(bedDoorPivot, -0.82, -0.04, 0.98, -0.74, 0.04, 1.02, matBrass);
+
+// 2. Bathroom 9M West-Sliding Pocket Door (slides along X at Y=4.84)
+const bathDoorGroup = new THREE.Group();
+root.add(bathDoorGroup);
+addHouseBox(bathDoorGroup, -1.08, 4.82, 0.01, -0.18, 4.86, 2.09, matOakJoinery);
+addHouseBox(bathDoorGroup, -0.28, 4.80, 0.95, -0.25, 4.88, 1.12, matBrass);
+
+// 3. Full-Opening 4-Leaf Bifold Doors (Vikdörrar) across X=-3.985..-1.56 (4 x 0.606 m leaves -> 100% clear opening!)
+const leafW = 2.425 / 4; // 0.60625 m
+const bifoldWestRoot = new THREE.Group();
+bifoldWestRoot.position.set(XW_IN + 0.005, 0, -5.65);
+root.add(bifoldWestRoot);
+addHouseBox(bifoldWestRoot, 0.00, -0.015, 0.01, leafW - 0.006, 0.015, 2.17, matLaundryDoor);
+const bifoldWestInner = new THREE.Group();
+bifoldWestInner.position.set(leafW, 0, 0);
+bifoldWestRoot.add(bifoldWestInner);
+addHouseBox(bifoldWestInner, 0.00, -0.015, 0.01, leafW - 0.008, 0.015, 2.17, matLaundryDoor);
+addHouseBox(bifoldWestInner, leafW - 0.06, 0.015, 0.96, leafW - 0.04, 0.035, 1.14, matBrass);
+
+const bifoldEastRoot = new THREE.Group();
+bifoldEastRoot.position.set(-1.565, 0, -5.65);
+root.add(bifoldEastRoot);
+addHouseBox(bifoldEastRoot, -(leafW - 0.006), -0.015, 0.01, 0.00, 0.015, 2.17, matLaundryDoor);
+const bifoldEastInner = new THREE.Group();
+bifoldEastInner.position.set(-leafW, 0, 0);
+bifoldEastRoot.add(bifoldEastInner);
+addHouseBox(bifoldEastInner, -(leafW - 0.008), -0.015, 0.01, 0.00, 0.015, 2.17, matLaundryDoor);
+addHouseBox(bifoldEastInner, -(leafW - 0.06), 0.015, 0.96, -(leafW - 0.04), 0.035, 1.14, matBrass);
+
+window.toggleDoor = (which) => {
+  doorState[which] = !doorState[which];
+  const bBed = document.getElementById('btn-d-bed');
+  const bBath = document.getElementById('btn-d-bath');
+  const bLaun = document.getElementById('btn-d-laun');
+  const bPatio = document.getElementById('btn-d-patio');
+  bBed.textContent = `🚪 Sovrumsdörr 9M: ${doorState.bed ? 'Öppen' : 'Stängd'}`;
+  bBed.classList.toggle('open', doorState.bed);
+  bBath.textContent = `🚪 Badrum Skjutdörr 9M (Väst): ${doorState.bath ? 'Öppen' : 'Stängd'}`;
+  bBath.classList.toggle('open', doorState.bath);
+  bLaun.textContent = `🧺 Vikdörrar Tvätt (TS + TM/TT + Vask): ${doorState.laundry ? 'Öppen' : 'Stängd'}`;
+  bLaun.classList.toggle('open', doorState.laundry);
+  bPatio.textContent = `🌿 Lyft-Skjutdörr Syd (2,10 m): ${doorState.patio ? 'Öppen' : 'Stängd'}`;
+  bPatio.classList.toggle('open', doorState.patio);
+  // Immediately resolve collision in case a door was closed near the camera
+  resolveCircleAABBs();
+};
+
+// ---------------------------------------------------------------------------
+// Day (incl. North Clerestory Daylight!) vs. Cozy Evening (E-101) Lighting
+// ---------------------------------------------------------------------------
+const hemiLight = new THREE.HemisphereLight(0xf0f8ff, 0xb8a88e, 1.15);
+scene.add(hemiLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff6e0, 2.35);
+sunLight.position.set(-7.5, 9.5, 11.0);
+sunLight.target.position.set(-2.0, 0.0, -2.2);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 1;
+sunLight.shadow.camera.far = 32;
+sunLight.shadow.camera.left = -8;
+sunLight.shadow.camera.right = 8;
+sunLight.shadow.camera.top = 8;
+sunLight.shadow.camera.bottom = -8;
+sunLight.shadow.bias = -0.0005;
+scene.add(sunLight);
+scene.add(sunLight.target);
+
+// Dedicated Northern Sky Daylight streaming through the 180x50 cm Bathroom Clerestory Window over the Bathtub!
+const northClerestoryDaylight = new THREE.SpotLight(0xe4f1ff, 3.2, 8.5, Math.PI * 0.42, 0.55, 1.3);
+northClerestoryDaylight.position.set(-2.95, 2.55, -10.1);
+northClerestoryDaylight.target.position.set(-2.65, 0.45, -7.2);
+scene.add(northClerestoryDaylight);
+scene.add(northClerestoryDaylight.target);
+
+const eveningLights = [];
+function addWarmPoint(x, y, z, color, intensity, dist) {
+  const l = new THREE.PointLight(color, intensity, dist, 1.7);
+  l.position.set(x, z, -y);
+  scene.add(l);
+  eveningLights.push({ light: l, maxI: intensity });
+  return l;
+}
+// L-BRICK: 2700K ceiling grazer washing preserved 1957 red-brick feature wall
+addWarmPoint(-0.22, 1.00, 2.35, 0xffb35c, 1.45, 4.2);
+addWarmPoint(-0.22, 2.45, 2.35, 0xffb35c, 1.45, 4.2);
+// Bedside reading sconces
+addWarmPoint(-3.80, 0.98, 1.12, 0xffaa4c, 0.95, 3.2);
+addWarmPoint(-3.80, 3.44, 1.12, 0xffaa4c, 0.95, 3.2);
+// L-SPA-LED & Spots (130 cm Brick Vanity Halo, NW Tub Cove, NE Shower & Ø2000 Center)
+addWarmPoint(-0.35, 6.85, 1.65, 0xffc67a, 1.35, 4.2);
+addWarmPoint(-3.10, 8.08, 0.35, 0xffaa4c, 0.85, 3.2);
+addWarmPoint(-0.86, 8.30, 2.42, 0xffe4b8, 1.15, 4.2);
+addWarmPoint(-2.28, 6.72, 2.42, 0xffe4b8, 1.25, 4.8);
+addWarmPoint(-2.75, 5.30, 1.85, 0xffe8c2, 0.95, 3.0);
+// L-NIGHT-COR: 5% warm 2200K toe-kick night-path in Sluss & Open Corridor
+addWarmPoint(-0.60, 4.00, 0.25, 0xff9d3b, 0.55, 2.8);
+addWarmPoint(1.50, 3.45, 0.22, 0xff9d3b, 0.65, 3.8);
+addWarmPoint(-2.15, -0.45, 2.15, 0xffb866, 1.10, 5.5);
+
+const matLedStrip = new THREE.MeshBasicMaterial({ color: 0xffc470 });
+const ledMeshes = [
+  addHouseBox(root, -0.20, 0.45, 2.42, -0.16, 3.10, 2.44, matLedStrip, false, false),
+  addHouseBox(root, -0.48, 6.20, 0.24, -0.45, 7.50, 0.26, matLedStrip, false, false),
+  addHouseBox(root, -3.93, 8.13, 0.02, -2.27, 8.15, 0.04, matLedStrip, false, false),
+  addHouseBox(root, -0.95, 3.23, 0.02, 4.80,  3.25, 0.04, matLedStrip, false, false),
+];
+
+window.setLighting = (mode) => {
+  const isEve = (mode === 'evening');
+  document.getElementById('btn-day').classList.toggle('active', !isEve);
+  document.getElementById('btn-eve').classList.toggle('active', isEve);
+
+  scene.background.setHex(isEve ? 0x0b1326 : 0xcce4fa);
+  scene.fog.color.setHex(isEve ? 0x0b1326 : 0xcce4fa);
+  hemiLight.intensity = isEve ? 0.16 : 1.18;
+  sunLight.intensity = isEve ? 0.04 : 2.35;
+  northClerestoryDaylight.intensity = isEve ? 0.08 : 3.20;
+  matEmissiveWarm.emissiveIntensity = isEve ? 1.8 : 0.25;
+  matMirrorHalo.emissiveIntensity = isEve ? 2.0 : 0.35;
+  ledMeshes.forEach(m => m.visible = isEve);
+  eveningLights.forEach(e => e.light.intensity = isEve ? e.maxI : e.maxI * 0.14);
+};
+setLighting('day');
+
+// ---------------------------------------------------------------------------
+// Explicit Solid AABB Obstacle Array + Iterative Circle-vs-AABB Sliding Collision
+// ---------------------------------------------------------------------------
+const STATIC_COLLIDERS = [
+  // 1. 365 mm Monolithic Ytong Exterior Walls
+  { x1: -4.60, y1: -0.20, x2: XW_IN, y2: 9.50, tag: 'ext_west' },
+  { x1: -4.60, y1: YN_IN, x2: 0.25,  y2: 9.50, tag: 'ext_north' },
+  { x1: XE_PROT_IN, y1: 7.53, x2: 0.30, y2: 9.50, tag: 'ext_east_n' },
+  // South wall piers + fixed W slider pane (-3.62..-2.57) + E dreh-kipp spandrel (-1.52..0.00); clear slider opening = -2.57..-1.52 (1.05 m!)
+  { x1: -4.60, y1: -0.05, x2: -2.57, y2: YS_IN, tag: 'ext_south_w' },
+  { x1: -1.52, y1: -0.05, x2: 0.00,  y2: YS_IN, tag: 'ext_south_e' },
+  // Outdoor Pergola Terrace Perimeter Guard
+  { x1: -4.85, y1: -3.85, x2: -4.48, y2: 0.05,  tag: 'pergola_w' },
+  { x1: -4.85, y1: -3.85, x2: 0.45,  y2: -3.48, tag: 'pergola_s' },
+  { x1: 0.12,  y1: -3.85, x2: 0.45,  y2: 0.00,  tag: 'pergola_e' },
+
+  // 2. Preserved 1957 Red-Brick Wall (X=0.00..0.25, doorway Y=3.35..4.35 = 1.00 m clear)
+  { x1: 0.00, y1: -0.05, x2: 0.25, y2: 3.35, tag: 'brick_s' },
+  { x1: 0.00, y1: 4.35,  x2: 0.25, y2: 7.53, tag: 'brick_n' },
+
+  // 3. North Bedroom Acoustic Wall (Y=4.73..4.95, 9M pocket doorway X=-1.08..-0.18 = 0.90 m clear)
+  { x1: XW_IN, y1: 4.73, x2: -1.08, y2: 4.95, tag: 'bath_wall_w' },
+  { x1: -0.18, y1: 4.73, x2: 0.00,  y2: 4.95, tag: 'bath_wall_e' },
+
+  // 4. Sluss Vestibule Walls (9M bedroom doorway X=-1.08..-0.18 = 0.90 m clear)
+  { x1: -1.34, y1: 3.20, x2: -1.18, y2: 4.73, tag: 'vest_w' },
+  { x1: -1.34, y1: 3.20, x2: -1.08, y2: 3.36, tag: 'vest_sw' },
+  { x1: -0.18, y1: 3.20, x2: 0.00,  y2: 3.36, tag: 'vest_se' },
+
+  // 5. Master Bedroom Furniture (King bed, nightstands, 2.645 x 0.60 m wardrobe)
+  { x1: XW_IN, y1: 1.31, x2: XW_IN + 2.10, y2: 3.11, tag: 'king_bed' },
+  { x1: XW_IN, y1: 0.76, x2: XW_IN + 0.44, y2: 1.20, tag: 'nightstand_s' },
+  { x1: XW_IN, y1: 3.22, x2: XW_IN + 0.44, y2: 3.66, tag: 'nightstand_n' },
+  { x1: XW_IN, y1: 4.13, x2: -1.34,        y2: 4.73, tag: 'wardrobe' },
+
+  // 6. Redesigned Spa Bathroom & 2.425 m Laundry Fixtures
+  { x1: XW_IN, y1: 4.95, x2: -1.56, y2: 5.66, tag: 'laundry_alcove' },
+  { x1: -1.56, y1: 4.95, x2: -1.48, y2: 5.67, tag: 'laundry_cheek' },
+  { x1: -0.50, y1: 6.20, x2: 0.00,  y2: 7.50, tag: 'double_vanity' },
+  { x1: XW_IN, y1: 6.95, x2: -3.80, y2: 8.10, tag: 'wc_ledge' },
+  { x1: -3.80, y1: 7.21, x2: -3.35, y2: 7.59, tag: 'wc_bowl' },
+  { x1: XW_IN, y1: 8.15, x2: -2.25, y2: YN_IN, tag: 'bathtub' },
+  { x1: -1.38, y1: 7.98, x2: -1.33, y2: YN_IN, tag: 'shower_glass' },
+
+  // 7. Existing Open Corridor & Kontor Context (8M Kontor doorway X=1.035..1.835 = 0.80 m clear)
+  { x1: 0.25,  y1: 3.05, x2: 5.15,  y2: 3.23, tag: 'allrum_n' },
+  { x1: 4.85,  y1: 3.05, x2: 5.15,  y2: 4.60, tag: 'corridor_e_cap' },
+  { x1: 0.25,  y1: 4.45, x2: 1.035, y2: 4.63, tag: 'kontor_sw' },
+  { x1: 1.835, y1: 4.45, x2: 2.80,  y2: 4.57, tag: 'kontor_se' },
+  { x1: 2.62,  y1: 4.45, x2: 2.85,  y2: 7.60, tag: 'kontor_e' },
+  { x1: 1.92,  y1: 5.30, x2: 2.62,  y2: 6.70, tag: 'kontor_desk' },
+  { x1: 0.25,  y1: 7.38, x2: 5.15,  y2: 7.60, tag: 'kontor_n' },
+];
+
+function getActiveColliders() {
+  const list = STATIC_COLLIDERS.slice();
+  if (!doorState.bed) {
+    list.push({ x1: -1.08, y1: 3.22, x2: -0.18, y2: 3.34, tag: 'door_bed_closed' });
+  } else {
+    list.push({ x1: -0.22, y1: 2.38, x2: 0.00, y2: 3.20, tag: 'door_bed_leaf_open' });
+  }
+  if (!doorState.bath) {
+    list.push({ x1: -1.08, y1: 4.78, x2: -0.18, y2: 4.90, tag: 'door_bath_closed' });
+  }
+  if (!doorState.patio) {
+    list.push({ x1: -2.57, y1: 0.10, x2: -1.52, y2: 0.28, tag: 'door_patio_closed' });
+  }
+  if (doorState.laundry) {
+    list.push({ x1: XW_IN, y1: 5.65, x2: -3.86, y2: 6.26, tag: 'bifold_w_open' });
+    list.push({ x1: -1.68, y1: 5.65, x2: -1.52, y2: 6.26, tag: 'bifold_e_open' });
+  }
+  return list;
+}
+
+function minDistToAABBs(hx, hy, colliders) {
+  let minD = Infinity;
+  for (const b of colliders) {
+    const cx = Math.max(b.x1, Math.min(hx, b.x2));
+    const cy = Math.max(b.y1, Math.min(hy, b.y2));
+    const d = Math.hypot(hx - cx, hy - cy);
+    if (d < minD) minD = d;
+  }
+  return minD;
+}
+
+// ---------------------------------------------------------------------------
+// 9 Verified Teleport Viewpoints (Every Point Strictly > 0.30 m From Any AABB!)
+// ---------------------------------------------------------------------------
+const VIEWPOINTS = {
+  bedside:    { hx: -0.95, hy: 2.21, yaw:  1.52, pitch: -0.02 },
+  brick:      { hx: -2.85, hy: 0.85, yaw: -0.95, pitch:  0.14 },
+  pergola:    { hx: -2.05, hy: 0.82, yaw:  3.14, pitch: -0.04, openPatio: true },
+  sluss:      { hx: -0.59, hy: 4.04, yaw:  2.45, pitch: -0.04 },
+  spa_entry:  { hx: -0.78, hy: 5.45, yaw:  0.38, pitch:  0.04 },
+  spa_center: { hx: -2.15, hy: 6.65, yaw: -0.45, pitch: -0.03 },
+  spa_tub:    { hx: -2.05, hy: 7.35, yaw:  0.32, pitch:  0.02 },
+  laundry:    { hx: -2.55, hy: 6.85, yaw:  3.08, pitch: -0.08, openLaundry: true },
+  corridor:   { hx:  2.15, hy: 3.84, yaw:  1.57, pitch:  0.03 },
+};
+
+// Startup QA Self-Check: assert all viewpoints > 0.30 m from any obstacle AABB
+for (const [vid, vpObj] of Object.entries(VIEWPOINTS)) {
+  const dClear = minDistToAABBs(vpObj.hx, vpObj.hy, STATIC_COLLIDERS);
+  console.assert(dClear > 0.30, `Viewpoint ${vid} clearance ${dClear.toFixed(3)} m <= 0.30 m!`);
+}
+
+let posHX = -2.85, posHY = 0.85, camYaw = -0.95, camPitch = 0.12;
+
+function resolveCircleAABBs() {
+  posHX = Math.max(-4.52, Math.min(4.82, posHX));
+  posHY = Math.max(-3.52, Math.min(8.92, posHY));
+  const colliders = getActiveColliders();
+  for (let iter = 0; iter < 5; iter++) {
+    for (const b of colliders) {
+      const cx = Math.max(b.x1, Math.min(posHX, b.x2));
+      const cy = Math.max(b.y1, Math.min(posHY, b.y2));
+      const ox = posHX - cx, oy = posHY - cy;
+      const d2 = ox * ox + oy * oy;
+      if (d2 < PLAYER_R * PLAYER_R) {
+        if (d2 > 1e-8) {
+          const d = Math.sqrt(d2);
+          const push = PLAYER_R - d;
+          posHX += (ox / d) * push;
+          posHY += (oy / d) * push;
+        } else {
+          const dl = posHX - b.x1, dr = b.x2 - posHX;
+          const db = posHY - b.y1, dt = b.y2 - posHY;
+          const m = Math.min(dl, dr, db, dt);
+          if (m === dl) posHX = b.x1 - PLAYER_R;
+          else if (m === dr) posHX = b.x2 + PLAYER_R;
+          else if (m === db) posHY = b.y1 - PLAYER_R;
+          else posHY = b.y2 + PLAYER_R;
+        }
+      }
+    }
+  }
+}
+
+function moveAndSlide(dxH, dyH) {
+  const totalDist = Math.hypot(dxH, dyH);
+  const steps = Math.max(1, Math.ceil(totalDist / 0.05));
+  const sx = dxH / steps, sy = dyH / steps;
+  for (let s = 0; s < steps; s++) {
+    posHX += sx;
+    posHY += sy;
+    resolveCircleAABBs();
+  }
+}
+
+function detectRoomName(hx, hy) {
+  if (hy < 0.22) return 'Uteplats & Pergola (Syd)';
+  if (hx > 0.20 && hy > 4.50) return 'Kontor (6,7 m²)';
+  if (hx > 0.15) return 'Öppen Korridor (1,18 m · AC-2)';
+  if (hy > 4.85) return 'Spa-Badrum & Vikdörrstvätt (15,4 m²)';
+  if (hx > -1.25 && hy > 3.28) return 'Sluss / Passage (1,6 m²)';
+  return 'Master Sovrum (13,8 m² · 365mm Ytong)';
+}
+
+// ---------------------------------------------------------------------------
+// Bulletproof Input Handling — Zero Stuck Movement Guarantee!
+// ---------------------------------------------------------------------------
+const keys = {};
+const padState = { fwd: false, back: false, left: false, right: false };
+let dragging = false, lastX = 0, lastY = 0;
+
+function clearAllMovement() {
+  for (const k of Object.keys(keys)) keys[k] = false;
+  padState.fwd = false;
+  padState.back = false;
+  padState.left = false;
+  padState.right = false;
+  dragging = false;
+}
+
+window.teleport = (id) => {
+  clearAllMovement();
+  const v = VIEWPOINTS[id];
+  if (!v) return;
+  if (v.openLaundry && !doorState.laundry) toggleDoor('laundry');
+  if (v.openPatio && !doorState.patio) toggleDoor('patio');
+  posHX = v.hx; posHY = v.hy; camYaw = v.yaw; camPitch = v.pitch;
+  resolveCircleAABBs();
+};
+
+window.stopAndReset = () => {
+  clearAllMovement();
+  teleport('brick');
+};
+
+const MOVE_CODES = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+
+window.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (MOVE_CODES.has(e.code)) {
+    e.preventDefault();
+    if (document.activeElement && document.activeElement.blur && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
+    keys[e.code] = true;
+  } else if (e.code === 'KeyR') {
+    e.preventDefault();
+    stopAndReset();
+  }
+}, { passive: false });
+
+window.addEventListener('keyup', e => {
+  keys[e.code] = false;
+});
+
+window.addEventListener('blur', clearAllMovement);
+document.addEventListener('visibilitychange', clearAllMovement);
+window.addEventListener('pointerup', clearAllMovement);
+window.addEventListener('pointercancel', clearAllMovement);
+window.addEventListener('contextmenu', clearAllMovement);
+
+document.querySelectorAll('#walk-pad button').forEach(btn => {
+  const k = btn.dataset.mv;
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    padState[k] = true;
+  });
+  btn.addEventListener('pointerup', () => { padState[k] = false; });
+  btn.addEventListener('pointercancel', () => { padState[k] = false; });
+  btn.addEventListener('pointerleave', () => { padState[k] = false; });
+});
+
+const dom = renderer.domElement;
+dom.addEventListener('pointerdown', e => {
+  dragging = true;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  try { dom.setPointerCapture(e.pointerId); } catch (_) {}
+});
+dom.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  camYaw -= dx * 0.0042;
+  camPitch = Math.max(-1.15, Math.min(1.22, camPitch - dy * 0.0042));
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------------------------------------------------------------------------
+// Main Animation Loop
+// ---------------------------------------------------------------------------
+let prevT = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - prevT) / 1000);
+  prevT = now;
+
+  // Smooth door animations
+  const targetBedRot = doorState.bed ? -Math.PI * 0.47 : 0.0;
+  bedDoorPivot.rotation.y += (targetBedRot - bedDoorPivot.rotation.y) * Math.min(1, dt * 8);
+
+  const targetBathX = doorState.bath ? -0.84 : 0.0;
+  bathDoorGroup.position.x += (targetBathX - bathDoorGroup.position.x) * Math.min(1, dt * 8);
+
+  // Full-opening 4-leaf Bifold Laundry Doors (fold flat against X=-3.96 and X=-1.58!)
+  const targetBWRoot = doorState.laundry ? Math.PI * 0.48 : 0.0;
+  const targetBWInner = doorState.laundry ? -Math.PI * 0.96 : 0.0;
+  bifoldWestRoot.rotation.y += (targetBWRoot - bifoldWestRoot.rotation.y) * Math.min(1, dt * 7);
+  bifoldWestInner.rotation.y += (targetBWInner - bifoldWestInner.rotation.y) * Math.min(1, dt * 7);
+
+  const targetBERoot = doorState.laundry ? -Math.PI * 0.48 : 0.0;
+  const targetBEInner = doorState.laundry ? Math.PI * 0.96 : 0.0;
+  bifoldEastRoot.rotation.y += (targetBERoot - bifoldEastRoot.rotation.y) * Math.min(1, dt * 7);
+  bifoldEastInner.rotation.y += (targetBEInner - bifoldEastInner.rotation.y) * Math.min(1, dt * 7);
+
+  // 2.10 m South Lift-and-Slide Door Leaf
+  const targetPatioX = doorState.patio ? -0.98 : 0.0;
+  patioSliderLeaf.position.x += (targetPatioX - patioSliderLeaf.position.x) * Math.min(1, dt * 6);
+
+  // Walking velocity -> Circle-vs-AABB slide
+  let fwd = 0, str = 0;
+  if (keys['KeyW'] || keys['ArrowUp'] || padState.fwd) fwd += 1;
+  if (keys['KeyS'] || keys['ArrowDown'] || padState.back) fwd -= 1;
+  if (keys['KeyD'] || keys['ArrowRight'] || padState.right) str += 1;
+  if (keys['KeyA'] || keys['ArrowLeft'] || padState.left) str -= 1;
+
+  if (fwd !== 0 || str !== 0) {
+    const len = Math.hypot(fwd, str);
+    fwd /= len; str /= len;
+    const speed = 2.35 * dt;
+    const fHX = -Math.sin(camYaw), fHY = Math.cos(camYaw);
+    const rHX =  Math.cos(camYaw), rHY = Math.sin(camYaw);
+    moveAndSlide((fHX * fwd + rHX * str) * speed, (fHY * fwd + rHY * str) * speed);
+  }
+
+  camera.position.set(posHX, EYE_Y, -posHY);
+  camera.rotation.y = camYaw;
+  camera.rotation.x = camPitch;
+
+  document.getElementById('lbl-room').textContent = detectRoomName(posHX, posHY);
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

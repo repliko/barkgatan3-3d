@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Barkgatan 3 — 3D, Takjämförelse (45° vs 30°) & 1:1 Trädgårds-AR</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: #0f172a; color: #f8fafc; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  model-viewer { width: 100%; flex: 1; background: radial-gradient(circle at 50% 35%, #dbeafe 0%, #93c5fd 100%); --poster-color: transparent; }
+  #hud { position: fixed; top: 12px; left: 12px; right: 12px; max-width: 430px; background: rgba(15,23,42,0.90);
+          backdrop-filter: blur(10px); border: 1px solid rgba(148,163,184,0.28); border-radius: 14px; padding: 12px 14px;
+          box-shadow: 0 10px 28px rgba(0,0,0,0.4); z-index: 10; }
+  h1 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .sub { font-size: 11px; color: #94a3b8; margin-bottom: 9px; }
+  select { width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 8px;
+            padding: 8px 10px; font-size: 12.5px; font-weight: 600; margin-bottom: 8px; outline: none; }
+  .cams { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cams button { flex: 1; min-width: 62px; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(148,163,184,0.3);
+                  border-radius: 7px; padding: 6px 6px; font-size: 11px; cursor: pointer; }
+  .cams button:hover { border-color: #38bdf8; background: #334155; }
+  .walk-link { display: block; width: 100%; text-align: center; text-decoration: none; background: linear-gradient(135deg, #059669, #0284c7);
+                color: #ffffff; font-weight: 700; font-size: 12.5px; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px;
+                border: 1px solid rgba(255,255,255,0.25); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; font-size: 11px; }
+  .st { background: rgba(30,41,59,0.9); padding: 5px 7px; border-radius: 7px; }
+  .st span { display: block; font-size: 9.5px; color: #94a3b8; }
+  .st b { color: #4ade80; font-size: 11.5px; }
+  #ar-btn { background: #0284c7; color: #ffffff; border: none; border-radius: 999px; padding: 12px 20px;
+             font-size: 14px; font-weight: 700; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+             box-shadow: 0 8px 24px rgba(2,132,199,0.55); cursor: pointer; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="hud">
+  <h1>Barkgatan 3 — 3D & 1:1 AR (45° vs 30°)</h1>
+  <div class="sub">Vinstorp 35:45, Lomma · Samma 4,35 × 9,33 m platta för båda takvarianterna</div>
+  <select id="sel"></select>
+  <a class="walk-link" href="walkthrough.html">🚶 Gå in i huset — Förstapersons Interiörvandring (3D PBR)</a>
+  <div class="cams">
+    <button onclick="cam('-135deg 65deg auto')">SV Vy</button>
+    <button onclick="cam('-45deg 62deg auto')">NV Vinkelränna</button>
+    <button onclick="cam('-90deg 78deg auto')">Västfasad</button>
+    <button onclick="cam('0deg 15deg auto')">Planvy</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<model-viewer id="mv"
+  src="models/Barkgatan3_ext_west_45deg_flush.glb"
+  ios-src="models/Barkgatan3_ext_west_45deg_flush.usdz"
+  ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto"
+  camera-controls touch-action="pan-y"
+  camera-orbit="-135deg 65deg auto"
+  shadow-intensity="1.0" shadow-softness="0.7" exposure="1.05"
+  alt="Barkgatan 3 3D-modell">
+  <button slot="ar-button" id="ar-btn">📱 Visa i 1:1 AR (iPhone / Android)</button>
+</model-viewer>
+
+<script>
+const MODELS = [{"id": "ext_west_45deg_flush", "title": "45,0° Sadeltak — Liv i nock (+5,13 m)", "glb": "models/Barkgatan3_ext_west_45deg_flush.glb", "usdz": "models/Barkgatan3_ext_west_45deg_flush.usdz", "compliance": {"lot_area_m2": 791.81, "max_bya_m2": 263.91, "bya_existing_m2": 167.76, "bya_extension_m2": 40.59, "bya_main_total_m2": 208.34, "bya_vaxthus_m2": 14.56, "bya_bod_m2": 4.83, "bya_cykelbod_m2": 7.4, "bya_outbuildings_counted_m2": 26.79, "bya_friggebod_exempt_m2": 14.0, "bya_total_m2": 235.13, "bya_total_incl_friggebod_m2": 249.13, "bya_margin_m2": 28.78, "bya_margin_incl_friggebod_m2": 14.78, "byggnadshojd_m": 2.95, "max_byggnadshojd_m": 3.8, "ridge_1957_ground_m": 5.124, "ridge_ext_ground_m": 5.125, "setbacks": {"B1_existing_sw_m": 7.67, "B1_existing_nw_m": 7.71, "B2_existing_nw_m": 4.83, "B2_existing_ne_m": 5.02, "east_gap_ne_m": 0.24, "ext_west_sw_m": 3.32, "ext_west_nw_m": 3.37, "ext_north_nw_m": 2.98, "ext_north_ne_m": 3.03, "min_west_m": 3.32, "min_north_m": 2.98, "requires_neighbor_consent": true, "requires_ei_fire_wall": true}}, "enabled": true, "vault_m": 4.15, "ridge_m": 5.125}, {"id": "ext_west_45deg_flush_cut", "title": "Interiör & Spa-planlösning (Utan tak · 4,35×9,33 m)", "glb": "models/Barkgatan3_ext_west_45deg_flush_cutaway.glb", "usdz": "models/Barkgatan3_ext_west_45deg_flush_cutaway.usdz", "compliance": {"lot_area_m2": 791.81, "max_bya_m2": 263.91, "bya_existing_m2": 167.76, "bya_extension_m2": 40.59, "bya_main_total_m2": 208.34, "bya_vaxthus_m2": 14.56, "bya_bod_m2": 4.83, "bya_cykelbod_m2": 7.4, "bya_outbuildings_counted_m2": 26.79, "bya_friggebod_exempt_m2": 14.0, "bya_total_m2": 235.13, "bya_total_incl_friggebod_m2": 249.13, "bya_margin_m2": 28.78, "bya_margin_incl_friggebod_m2": 14.78, "byggnadshojd_m": 2.95, "max_byggnadshojd_m": 3.8, "ridge_1957_ground_m": 5.124, "ridge_ext_ground_m": 5.125, "setbacks": {"B1_existing_sw_m": 7.67, "B1_existing_nw_m": 7.71, "B2_existing_nw_m": 4.83, "B2_existing_ne_m": 5.02, "east_gap_ne_m": 0.24, "ext_west_sw_m": 3.32, "ext_west_nw_m": 3.37, "ext_north_nw_m": 2.98, "ext_north_ne_m": 3.03, "min_west_m": 3.32, "min_north_m": 2.98, "requires_neighbor_consent": true, "requires_ei_fire_wall": true}}, "enabled": true, "vault_m": 4.15, "ridge_m": 5.125}, {"id": "ext_west_30deg", "title": "30,0° Sadeltak — Samma lutning som 1957/2014 (+4,21 m)", "glb": "models/Barkgatan3_ext_west_30deg.glb", "usdz": "models/Barkgatan3_ext_west_30deg.usdz", "compliance": {"lot_area_m2": 791.81, "max_bya_m2": 263.91, "bya_existing_m2": 167.76, "bya_extension_m2": 40.59, "bya_main_total_m2": 208.34, "bya_vaxthus_m2": 14.56, "bya_bod_m2": 4.83, "bya_cykelbod_m2": 7.4, "bya_outbuildings_counted_m2": 26.79, "bya_friggebod_exempt_m2": 14.0, "bya_total_m2": 235.13, "bya_total_incl_friggebod_m2": 249.13, "bya_margin_m2": 28.78, "bya_margin_incl_friggebod_m2": 14.78, "byggnadshojd_m": 2.95, "max_byggnadshojd_m": 3.8, "ridge_1957_ground_m": 5.124, "ridge_ext_ground_m": 4.206, "setbacks": {"B1_existing_sw_m": 7.67, "B1_existing_nw_m": 7.71, "B2_existing_nw_m": 4.83, "B2_existing_ne_m": 5.02, "east_gap_ne_m": 0.24, "ext_west_sw_m": 3.32, "ext_west_nw_m": 3.37, "ext_north_nw_m": 2.98, "ext_north_ne_m": 3.03, "min_west_m": 3.32, "min_north_m": 2.98, "requires_neighbor_consent": true, "requires_ei_fire_wall": true}}, "enabled": true, "vault_m": 3.41, "ridge_m": 4.206}, {"id": "none", "title": "Befintligt hus (Utan tillbyggnad)", "glb": "models/Barkgatan3_none.glb", "usdz": "models/Barkgatan3_none.usdz", "compliance": {"lot_area_m2": 791.81, "max_bya_m2": 263.91, "bya_existing_m2": 167.76, "bya_extension_m2": 0.0, "bya_main_total_m2": 167.76, "bya_vaxthus_m2": 14.56, "bya_bod_m2": 4.83, "bya_cykelbod_m2": 7.4, "bya_outbuildings_counted_m2": 26.79, "bya_friggebod_exempt_m2": 14.0, "bya_total_m2": 194.55, "bya_total_incl_friggebod_m2": 208.55, "bya_margin_m2": 69.36, "bya_margin_incl_friggebod_m2": 55.36, "byggnadshojd_m": 2.95, "max_byggnadshojd_m": 3.8, "ridge_1957_ground_m": 5.124, "ridge_ext_ground_m": null, "setbacks": {"B1_existing_sw_m": 7.67, "B1_existing_nw_m": 7.71, "B2_existing_nw_m": 4.83, "B2_existing_ne_m": 5.02, "east_gap_ne_m": 0.24}}, "enabled": false, "vault_m": null, "ridge_m": 5.124}];
+const sel = document.getElementById('sel');
+const mv = document.getElementById('mv');
+const stats = document.getElementById('stats');
+
+MODELS.forEach((m, i) => {
+  const o = document.createElement('option');
+  o.value = i; o.textContent = m.title;
+  sel.appendChild(o);
+});
+
+function renderStats(m) {
+  const c = m.compliance;
+  const sb = c.setbacks || {};
+  stats.innerHTML = `
+    <div class="st"><span>Total BYA (inkl. bodar)</span><b>${c.bya_total_m2.toFixed(1)} / ${c.max_bya_m2.toFixed(0)} m²</b></div>
+    <div class="st"><span>Gräns Väst / Nord</span><b>${m.enabled ? sb.min_west_m.toFixed(2)+' / '+sb.min_north_m.toFixed(2)+' m*' : 'Befintlig'}</b></div>
+    <div class="st"><span>Nock / Byggnadshöjd</span><b>+${(m.ridge_m||5.12).toFixed(2)} / ${c.byggnadshojd_m.toFixed(2)} m</b></div>
+  `;
+}
+
+sel.onchange = () => {
+  const m = MODELS[sel.value];
+  mv.src = m.glb;
+  mv.setAttribute('ios-src', m.usdz);
+  renderStats(m);
+};
+window.cam = (orbit) => { mv.cameraOrbit = orbit; };
+renderStats(MODELS[0]);
+</script>
+</body>
+</html>
