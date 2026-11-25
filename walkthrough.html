@@ -100,15 +100,16 @@
     <h1>Barkgatan 3 — Interiörvandring</h1>
     <button class="hide-btn" onclick="toggleHud(true); this.blur();" title="Dölj panel">✕ Dölj</button>
   </div>
-  <div class="sub">365 mm Ytong (3,985 × 8,60 m inv.) · 1957 röd tegelvägg · 180×50 överljus N · Vikdörrstvätt · Dual AC</div>
+  <div class="sub">365 mm Ytong (4,35 / 5,00 m) · 1957 röd tegelvägg · BBV kaklad kommodvägg · Överljus N · Dual AC</div>
   <a class="back-link" href="index.html">← Tillbaka till Utvändig 3D & 1:1 Trädgårds-AR</a>
 
   <div class="sec">
-    <div class="stitle">1. Tak- & Ryggåsvalv i Sovrum (Live-växling)</div>
+    <div class="stitle">1. Tak- & Breddval i Sovrum/Spa (Live-växling)</div>
     <div class="seg-col" id="ceil-btns">
-      <button class="ctrl active" data-c="open45" onclick="setCeiling('open45'); this.blur();">45,0° Öppen Limtränock (~4,15 m)</button>
-      <button class="ctrl" data-c="scis45" onclick="setCeiling('scis45'); this.blur();">45,0° Saxtakstol (~3,50 m)</button>
-      <button class="ctrl" data-c="open30" onclick="setCeiling('open30'); this.blur();">30,0° Öppen Limtränock (~3,41 m)</button>
+      <button class="ctrl active" data-c="open45" onclick="setCeiling('open45'); this.blur();">45,0° Öppen Limtränock (~4,15 m · 4,35 m)</button>
+      <button class="ctrl" data-c="scis45" onclick="setCeiling('scis45'); this.blur();">45,0° Saxtakstol (~3,50 m · 4,35 m)</button>
+      <button class="ctrl" data-c="open30" onclick="setCeiling('open30'); this.blur();">30,0° Öppen Limtränock (~3,41 m · 4,35 m)</button>
+      <button class="ctrl" data-c="open30wide" onclick="setCeiling('open30wide'); this.blur();">30,0° Bred 5,00 m (~3,59 m nock · Sid-vid-sid tvätt)</button>
     </div>
   </div>
 
@@ -366,8 +367,13 @@ const matCeramic = new THREE.MeshStandardMaterial({ color: 0xfbfcfd, roughness: 
 const matAppliance = new THREE.MeshStandardMaterial({ color: 0xf4f6f8, roughness: 0.26, metalness: 0.10 });
 const matBrass = new THREE.MeshStandardMaterial({ color: 0xc8a45d, roughness: 0.26, metalness: 0.82 });
 const matBlackMetal = new THREE.MeshStandardMaterial({ color: 0x22262b, roughness: 0.42, metalness: 0.65 });
+const matSliderFrame = new THREE.MeshStandardMaterial({ color: 0x333942, roughness: 0.36, metalness: 0.72 });
+const matSliderTrim = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.35, metalness: 0.35 });
 const matGlass = new THREE.MeshPhysicalMaterial({
   color: 0xdbeafe, transparent: true, opacity: 0.22, roughness: 0.06, metalness: 0.05, depthWrite: false, side: THREE.DoubleSide
+});
+const matSliderGlass = new THREE.MeshPhysicalMaterial({
+  color: 0xbfe0fb, transparent: true, opacity: 0.36, roughness: 0.08, metalness: 0.06, depthWrite: false, side: THREE.DoubleSide
 });
 const matInsectMesh = new THREE.MeshBasicMaterial({
   color: 0x334155, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide
@@ -424,73 +430,83 @@ for (let nb = 0; nb < 8; nb++) {
   root.add(bush);
 }
 
-// 2. Floors: Oak in Master Bedroom, Sluss, Open Corridor & Kontor; 60x60 Limestone in Spa & Laundry
-addHouseBox(root, XW_IN, YS_IN, -0.05, 0.00, 4.73, 0.00, matOakFloor, false, true);
+// 2. Floors: Oak in Master Bedroom, Sluss, Open Corridor & Kontor; 60x60 Limestone in Spa & Laundry (extended to -4.635 for 5m toggle)
+addHouseBox(root, -4.635, YS_IN, -0.05, 0.00, 4.73, 0.00, matOakFloor, false, true);
 addHouseBox(root, 0.00, 3.23, -0.05, 6.95, 4.45, 0.00, matOakFloor, false, true);
 addHouseBox(root, 0.25, 4.57, -0.05, 2.62, 7.38, 0.00, createOakFloorPBR(1.5, 1.8), false, true);
 const matSpaFloor = createLimestoneTilePBR(2.2, 2.2);
-addHouseBox(root, XW_IN, 4.95, -0.05, 0.00, YN_IN, 0.00, matSpaFloor, false, true);
+addHouseBox(root, -4.635, 4.95, -0.05, 0.00, YN_IN, 0.00, matSpaFloor, false, true);
 
-// 3. Preserved 1957 Red-Brick Feature Wall (X=0.00..0.25, Y=0.00..7.53 with doorway Y=3.35..4.35, Z=0..2.15)
+// 3. Preserved 1957 Red-Brick Feature Wall in Dry Master Bedroom & Sluss (Y=0.00..4.95);
+//    East Spa Bathroom Wall (Y=4.95..7.53) gets continuous BBV waterproofing + 60x60 Limestone Tile!
 const matBrickSouth = createBrickPBR(2.2, 2.2);
-const matBrickNorth = createBrickPBR(2.0, 1.8);
+const matBrickSluss = createBrickPBR(0.6, 1.5);
+const matWallTile = createLimestoneTilePBR(2.0, 1.2);
 addHouseBox(root, 0.00, 0.00, 0.00, 0.25, 3.35, 4.25, matBrickSouth);
 addHouseBox(root, 0.00, 3.35, 2.15, 0.25, 4.35, 4.25, createBrickPBR(0.7, 1.3));
-addHouseBox(root, 0.00, 4.35, 0.00, 0.25, 7.53, 4.25, matBrickNorth);
+addHouseBox(root, 0.00, 4.35, 0.00, 0.25, 4.95, 2.65, matBrickSluss);
+addHouseBox(root, 0.00, 4.95, 0.00, 0.25, 7.53, 2.65, matPlaster);
+addHouseBox(root, -0.025, 4.95, 0.00, 0.005, 7.53, 2.50, matWallTile);
 
-// 4. Monolithic 365 mm Ytong Exterior Shell (X=-4.35..0.00, Y=0.00..9.33)
-addHouseBox(root, -4.35, 0.00, 0.00, XW_IN, 9.33, 2.65, matPlaster); // West 365 mm REI 60 Ytong wall
+// Variant Bundles (4.35 m Default vs. 5.00 m Wide Side-by-Side)
+const bundle435 = new THREE.Group();
+const bundle500 = new THREE.Group();
+bundle500.visible = false;
+root.add(bundle435);
+root.add(bundle500);
+let isWideMode = false;
+
+// 4. Monolithic 365 mm Ytong Exterior Shell (4.35 m bundle)
+addHouseBox(bundle435, -4.35, 0.00, 0.00, XW_IN, 9.33, 2.65, matPlaster); // West 365 mm REI 60 Ytong wall
 addHouseBox(root, XE_PROT_IN, 7.53, 0.00, 0.00, YN_IN, 2.65, matPlaster); // East north-protrusion 365 mm Ytong wall
 
-// North 365 mm Ytong wall split around High 180 x 50 cm Clerestory Window (X=-3.85..-2.05, Z=1.85..2.35 m)
-addHouseBox(root, XW_IN, YN_IN, 0.00, -3.85, 9.33, 2.65, matPlaster);
-addHouseBox(root, -2.05, YN_IN, 0.00, 0.00,  9.33, 2.65, matPlaster);
-addHouseBox(root, -3.85, YN_IN, 0.00, -2.05, 9.33, 1.85, matPlaster);
-addHouseBox(root, -3.85, YN_IN, 2.35, -2.05, 9.33, 2.65, matPlaster); // Reinforced lintel + U-block ring beam zone
-// Clerestory 180x50 cm Frame & Fixed 3-Glass Pane (deep 365 mm reveal!)
-addHouseBox(root, -3.85, 9.10, 1.85, -2.05, 9.20, 1.90, matAppliance);
-addHouseBox(root, -3.85, 9.10, 2.30, -2.05, 9.20, 2.35, matAppliance);
-addHouseBox(root, -3.85, 9.10, 1.90, -3.80, 9.20, 2.30, matAppliance);
-addHouseBox(root, -2.10, 9.10, 1.90, -2.05, 9.20, 2.30, matAppliance);
-addHouseBox(root, -3.85, YN_IN - 0.01, 1.835, -2.05, 9.12, 1.855, matCeramic); // Crisp stone sill inside reveal
-addHouseBox(root, -3.80, 9.14, 1.90, -2.10, 9.16, 2.30, matGlass, false, false);
+// North 365 mm Ytong wall split around High 180 x 50 cm Clerestory Window (4.35 m)
+addHouseBox(bundle435, XW_IN, YN_IN, 0.00, -3.85, 9.33, 2.65, matPlaster);
+addHouseBox(bundle435, -2.05, YN_IN, 0.00, 0.00,  9.33, 2.65, matPlaster);
+addHouseBox(bundle435, -3.85, YN_IN, 0.00, -2.05, 9.33, 1.85, matPlaster);
+addHouseBox(bundle435, -3.85, YN_IN, 2.35, -2.05, 9.33, 2.65, matPlaster);
+addHouseBox(bundle435, -3.85, 9.10, 1.85, -2.05, 9.20, 1.90, matAppliance);
+addHouseBox(bundle435, -3.85, 9.10, 2.30, -2.05, 9.20, 2.35, matAppliance);
+addHouseBox(bundle435, -3.85, 9.10, 1.90, -3.80, 9.20, 2.30, matAppliance);
+addHouseBox(bundle435, -2.10, 9.10, 1.90, -2.05, 9.20, 2.30, matAppliance);
+addHouseBox(bundle435, -3.85, YN_IN - 0.01, 1.835, -2.05, 9.12, 1.855, matCeramic);
+addHouseBox(bundle435, -3.80, 9.14, 1.90, -2.10, 9.16, 2.30, matGlass, false, false);
 
-// South 365 mm Ytong wall split into:
-//   - 2.10 m Lift-and-Slide Patio Door (X=-3.62..-1.52, Z=0.00..2.20)
-//   - 0.80 m Tilt-and-Turn (Dreh-Kipp) Ventilation Window w/ Insect Screen (X=-1.52..-0.72, Z=0.85..2.20)
-addHouseBox(root, XW_IN, 0.00, 0.00, -3.62, YS_IN, 2.65, matPlaster);
-addHouseBox(root, -0.72, 0.00, 0.00, 0.00,  YS_IN, 2.65, matPlaster);
-addHouseBox(root, -3.62, 0.00, 2.20, -0.72, YS_IN, 2.65, matPlaster); // Continuous 2.90 m factory lintel
-addHouseBox(root, -1.52, 0.00, 0.00, -0.72, YS_IN, 0.85, matPlaster); // Spandrel below 0.80 m dreh-kipp window
-addHouseBox(root, -1.52, 0.16, 0.84, -0.72, YS_IN + 0.02, 0.87, matOakJoinery); // Deep oak windowsill inside 365mm reveal
+// South 365 mm Ytong wall (4.35 m): 2.10 m Lift-and-Slide + 0.80 m Dreh-Kipp
+addHouseBox(bundle435, XW_IN, 0.00, 0.00, -3.62, YS_IN, 2.65, matPlaster);
+addHouseBox(bundle435, -0.72, 0.00, 0.00, 0.00,  YS_IN, 2.65, matPlaster);
+addHouseBox(bundle435, -3.62, 0.00, 2.20, -0.72, YS_IN, 2.65, matPlaster);
+addHouseBox(bundle435, -1.52, 0.00, 0.00, -0.72, YS_IN, 0.85, matPlaster);
+addHouseBox(bundle435, -1.52, 0.16, 0.84, -0.72, YS_IN + 0.02, 0.87, matOakJoinery);
 
-// 2.10 m Lift-and-Slide Door Frame + Fixed West Pane (-3.62..-2.57) + Animated Sliding East Leaf (-2.57..-1.52)
-addHouseBox(root, -3.62, 0.13, 0.00, -1.52, 0.23, 0.04, matBlackMetal);
-addHouseBox(root, -3.62, 0.13, 2.15, -1.52, 0.23, 2.20, matBlackMetal);
-addHouseBox(root, -3.62, 0.13, 0.04, -3.57, 0.23, 2.15, matBlackMetal);
-addHouseBox(root, -1.57, 0.13, 0.00, -1.50, 0.24, 2.20, matBlackMetal); // Coupling mullion at X=-1.52
-addHouseBox(root, -2.60, 0.13, 0.04, -2.55, 0.17, 2.15, matBlackMetal);
-addHouseBox(root, -3.57, 0.145, 0.05, -2.60, 0.16, 2.14, matGlass, false, false);
+// 2.10 m Lift-and-Slide Door Frame + Offset Interior Track (Y=0.22..0.29) + Fixed West Pane + High-Contrast Sliding East Leaf
+addHouseBox(bundle435, -3.62, 0.13, 0.00, -1.52, 0.29, 0.04, matBlackMetal);
+addHouseBox(bundle435, -3.62, 0.13, 2.15, -1.52, 0.29, 2.20, matBlackMetal);
+addHouseBox(bundle435, -3.62, 0.13, 0.04, -3.57, 0.23, 2.15, matBlackMetal);
+addHouseBox(bundle435, -1.57, 0.13, 0.00, -1.50, 0.29, 2.20, matBlackMetal);
+addHouseBox(bundle435, -2.60, 0.13, 0.04, -2.55, 0.17, 2.15, matBlackMetal);
+addHouseBox(bundle435, -3.57, 0.145, 0.05, -2.60, 0.16, 2.14, matGlass, false, false);
 
-const patioSliderLeaf = new THREE.Group();
-root.add(patioSliderLeaf);
-addHouseBox(patioSliderLeaf, -2.57, 0.18, 0.04, -2.52, 0.22, 2.15, matBlackMetal);
-addHouseBox(patioSliderLeaf, -1.61, 0.18, 0.04, -1.56, 0.22, 2.15, matBlackMetal);
-addHouseBox(patioSliderLeaf, -2.57, 0.18, 0.04, -1.56, 0.22, 0.09, matBlackMetal);
-addHouseBox(patioSliderLeaf, -2.57, 0.18, 2.10, -1.56, 0.22, 2.15, matBlackMetal);
-addHouseBox(patioSliderLeaf, -2.52, 0.195, 0.09, -1.61, 0.205, 2.10, matGlass, false, false);
-addHouseBox(patioSliderLeaf, -1.65, 0.22, 0.96, -1.63, 0.25, 1.18, matBrass);
+const patioSliderLeaf435 = new THREE.Group();
+bundle435.add(patioSliderLeaf435);
+addHouseBox(patioSliderLeaf435, -2.57, 0.23, 0.04, -2.50, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf435, -1.63, 0.23, 0.04, -1.56, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf435, -2.57, 0.23, 0.04, -1.56, 0.28, 0.11, matSliderFrame);
+addHouseBox(patioSliderLeaf435, -2.57, 0.23, 2.08, -1.56, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf435, -2.50, 0.24, 0.11, -2.48, 0.27, 2.08, matSliderTrim);
+addHouseBox(patioSliderLeaf435, -1.65, 0.24, 0.11, -1.63, 0.27, 2.08, matSliderTrim);
+addHouseBox(patioSliderLeaf435, -2.48, 0.25, 0.11, -1.65, 0.26, 2.08, matSliderGlass, false, false);
+addHouseBox(patioSliderLeaf435, -1.69, 0.28, 0.86, -1.65, 0.32, 1.34, matBrass);
 
-// 0.80 m Tilt-and-Turn (Dreh-Kipp) Ventilation Window + Exterior Insect Screen (X=-1.52..-0.72, Z=0.85..2.20)
-addHouseBox(root, -1.52, 0.13, 0.85, -0.72, 0.23, 0.90, matBlackMetal);
-addHouseBox(root, -1.52, 0.13, 2.15, -0.72, 0.23, 2.20, matBlackMetal);
-addHouseBox(root, -0.77, 0.13, 0.90, -0.72, 0.23, 2.15, matBlackMetal);
-addHouseBox(root, -1.48, 0.125, 0.90, -0.77, 0.135, 2.15, matInsectMesh, false, false); // Integrated insect screen
-// Slightly tilted-in Dreh-Kipp sash (tilted ~5° inward at top for passive night cooling look!)
+// 0.80 m Dreh-Kipp Window (4.35 m)
+addHouseBox(bundle435, -1.52, 0.13, 0.85, -0.72, 0.23, 0.90, matBlackMetal);
+addHouseBox(bundle435, -1.52, 0.13, 2.15, -0.72, 0.23, 2.20, matBlackMetal);
+addHouseBox(bundle435, -0.77, 0.13, 0.90, -0.72, 0.23, 2.15, matBlackMetal);
+addHouseBox(bundle435, -1.48, 0.125, 0.90, -0.77, 0.135, 2.15, matInsectMesh, false, false);
 const dkSash = new THREE.Group();
 dkSash.position.set(-1.125, 0.90, -0.19);
 dkSash.rotation.x = -0.075;
-root.add(dkSash);
+bundle435.add(dkSash);
 addHouseBox(dkSash, -0.355, -0.015, 0.00,  0.355, 0.015, 0.045, matBlackMetal);
 addHouseBox(dkSash, -0.355, -0.015, 1.20,  0.355, 0.015, 1.245, matBlackMetal);
 addHouseBox(dkSash, -0.355, -0.015, 0.045,-0.310, 0.015, 1.20,  matBlackMetal);
@@ -498,8 +514,61 @@ addHouseBox(dkSash,  0.310, -0.015, 0.045, 0.355, 0.015, 1.20,  matBlackMetal);
 addHouseBox(dkSash, -0.310, -0.005, 0.045, 0.310, 0.005, 1.20,  matGlass, false, false);
 addHouseBox(dkSash,  0.320,  0.015, 0.54,  0.340, 0.045, 0.68,  matBrass);
 
+// 4B. 5.00 m Wide Shell (X_west_in = -4.635), 200x50 Clerestory, Centered South Glazing
+const XW_500 = -4.635;
+addHouseBox(bundle500, -5.00, 0.00, 0.00, XW_500, 9.33, 2.65, matPlaster);
+addHouseBox(bundle500, XW_500, YN_IN, 0.00, -4.50, 9.33, 2.65, matPlaster);
+addHouseBox(bundle500, -2.50, YN_IN, 0.00, 0.00,  9.33, 2.65, matPlaster);
+addHouseBox(bundle500, -4.50, YN_IN, 0.00, -2.50, 9.33, 1.85, matPlaster);
+addHouseBox(bundle500, -4.50, YN_IN, 2.35, -2.50, 9.33, 2.65, matPlaster);
+addHouseBox(bundle500, -4.50, 9.10, 1.85, -2.50, 9.20, 1.90, matAppliance);
+addHouseBox(bundle500, -4.50, 9.10, 2.30, -2.50, 9.20, 2.35, matAppliance);
+addHouseBox(bundle500, -4.50, 9.10, 1.90, -4.45, 9.20, 2.30, matAppliance);
+addHouseBox(bundle500, -2.55, 9.10, 1.90, -2.50, 9.20, 2.30, matAppliance);
+addHouseBox(bundle500, -4.50, YN_IN - 0.01, 1.835, -2.50, 9.12, 1.855, matCeramic);
+addHouseBox(bundle500, -4.45, 9.14, 1.90, -2.55, 9.16, 2.30, matGlass, false, false);
+
+addHouseBox(bundle500, XW_500, 0.00, 0.00, -3.95, YS_IN, 2.65, matPlaster);
+addHouseBox(bundle500, -1.05, 0.00, 0.00, 0.00,  YS_IN, 2.65, matPlaster);
+addHouseBox(bundle500, -3.95, 0.00, 2.20, -1.05, YS_IN, 2.65, matPlaster);
+addHouseBox(bundle500, -1.85, 0.00, 0.00, -1.05, YS_IN, 0.85, matPlaster);
+addHouseBox(bundle500, -1.85, 0.16, 0.84, -1.05, YS_IN + 0.02, 0.87, matOakJoinery);
+addHouseBox(bundle500, -3.95, 0.13, 0.00, -1.85, 0.29, 0.04, matBlackMetal);
+addHouseBox(bundle500, -3.95, 0.13, 2.15, -1.85, 0.29, 2.20, matBlackMetal);
+addHouseBox(bundle500, -3.95, 0.13, 0.04, -3.90, 0.23, 2.15, matBlackMetal);
+addHouseBox(bundle500, -1.90, 0.13, 0.00, -1.83, 0.29, 2.20, matBlackMetal);
+addHouseBox(bundle500, -2.93, 0.13, 0.04, -2.88, 0.17, 2.15, matBlackMetal);
+addHouseBox(bundle500, -3.90, 0.145, 0.05, -2.93, 0.16, 2.14, matGlass, false, false);
+
+const patioSliderLeaf500 = new THREE.Group();
+bundle500.add(patioSliderLeaf500);
+addHouseBox(patioSliderLeaf500, -2.90, 0.23, 0.04, -2.83, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf500, -1.96, 0.23, 0.04, -1.89, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf500, -2.90, 0.23, 0.04, -1.89, 0.28, 0.11, matSliderFrame);
+addHouseBox(patioSliderLeaf500, -2.90, 0.23, 2.08, -1.89, 0.28, 2.15, matSliderFrame);
+addHouseBox(patioSliderLeaf500, -2.83, 0.24, 0.11, -2.81, 0.27, 2.08, matSliderTrim);
+addHouseBox(patioSliderLeaf500, -1.98, 0.24, 0.11, -1.96, 0.27, 2.08, matSliderTrim);
+addHouseBox(patioSliderLeaf500, -2.81, 0.25, 0.11, -1.98, 0.26, 2.08, matSliderGlass, false, false);
+addHouseBox(patioSliderLeaf500, -2.02, 0.28, 0.86, -1.98, 0.32, 1.34, matBrass);
+
+addHouseBox(bundle500, -1.85, 0.13, 0.85, -1.05, 0.23, 0.90, matBlackMetal);
+addHouseBox(bundle500, -1.85, 0.13, 2.15, -1.05, 0.23, 2.20, matBlackMetal);
+addHouseBox(bundle500, -1.10, 0.13, 0.90, -1.05, 0.23, 2.15, matBlackMetal);
+addHouseBox(bundle500, -1.81, 0.125, 0.90, -1.10, 0.135, 2.15, matInsectMesh, false, false);
+const dkSash500 = new THREE.Group();
+dkSash500.position.set(-1.455, 0.90, -0.19);
+dkSash500.rotation.x = -0.075;
+bundle500.add(dkSash500);
+addHouseBox(dkSash500, -0.355, -0.015, 0.00,  0.355, 0.015, 0.045, matBlackMetal);
+addHouseBox(dkSash500, -0.355, -0.015, 1.20,  0.355, 0.015, 1.245, matBlackMetal);
+addHouseBox(dkSash500, -0.355, -0.015, 0.045,-0.310, 0.015, 1.20,  matBlackMetal);
+addHouseBox(dkSash500,  0.310, -0.015, 0.045, 0.355, 0.015, 1.20,  matBlackMetal);
+addHouseBox(dkSash500, -0.310, -0.005, 0.045, 0.310, 0.005, 1.20,  matGlass, false, false);
+addHouseBox(dkSash500,  0.320,  0.015, 0.54,  0.340, 0.045, 0.68,  matBrass);
+
 // 5. Continuous Sound-Insulated North Bedroom Wall (Y=4.73..4.95) & Sluss Walls
-addHouseBox(root, XW_IN, 4.73, 0.00, -1.08, 4.95, 2.55, matPlaster);
+addHouseBox(bundle435, XW_IN, 4.73, 0.00, -1.08, 4.95, 2.55, matPlaster);
+addHouseBox(bundle500, XW_500, 4.73, 0.00, -1.08, 4.95, 2.55, matPlaster);
 addHouseBox(root, -1.08, 4.73, 2.10, 0.00,  4.95, 2.55, matPlaster);
 addHouseBox(root, -0.18, 4.73, 0.00, 0.00,  4.95, 2.55, matPlaster);
 
@@ -509,7 +578,8 @@ addHouseBox(root, -0.18, 3.20, 0.00, 0.00,  3.36, 2.55, matPlaster);
 addHouseBox(root, -1.08, 3.20, 2.10, -0.18, 3.36, 2.55, matPlaster);
 // Flat 2.50 m ceilings in Sluss & Spa Bathroom
 addHouseBox(root, -1.34, 3.20, 2.50, 0.00, 4.73, 2.56, matCeiling, false, true);
-addHouseBox(root, XW_IN, 4.95, 2.50, 0.00, YN_IN, 2.58, matCeiling, false, true);
+addHouseBox(bundle435, XW_IN, 4.95, 2.50, 0.00, YN_IN, 2.58, matCeiling, false, true);
+addHouseBox(bundle500, XW_500, 4.95, 2.50, 0.00, YN_IN, 2.58, matCeiling, false, true);
 // Dry Flush UC-Väst Sub-Panel Door inside Sluss West Wall
 addHouseBox(root, -1.185, 3.82, 1.35, -1.165, 4.28, 1.92, matAppliance);
 
@@ -536,9 +606,9 @@ addHouseBox(root, 1.13, 3.67, 2.268, 1.24, 4.03, 2.283, matBlackMetal); // Direc
 // ---------------------------------------------------------------------------
 // Live Switchable Master Bedroom Vaulted Ceilings & Gable Infills (365 mm Ytong)
 // ---------------------------------------------------------------------------
-function buildVaultVariantGroup(zWall, zPeak, hasGlulam) {
+function buildVaultVariantGroup(xW, zWall, zPeak, hasGlulam) {
   const g = new THREE.Group();
-  const xW = XW_IN, xE = 0.00, xM = xW / 2.0;
+  const xE = 0.00, xM = xW / 2.0;
   const yS = YS_IN, yN = 4.73;
 
   function makeSlopeQuad(xa, za, xb, zb, ya, yb) {
@@ -579,64 +649,78 @@ function buildVaultVariantGroup(zWall, zPeak, hasGlulam) {
 }
 
 const ceilingGroups = {
-  open45: buildVaultVariantGroup(2.40, 4.15, true),
-  scis45: buildVaultVariantGroup(2.40, 3.50, false),
-  open30: buildVaultVariantGroup(2.40, 3.41, true),
+  open45:     buildVaultVariantGroup(XW_IN,  2.40, 4.15, true),
+  scis45:     buildVaultVariantGroup(XW_IN,  2.40, 3.50, false),
+  open30:     buildVaultVariantGroup(XW_IN,  2.40, 3.41, true),
+  open30wide: buildVaultVariantGroup(XW_500, 2.40, 3.59, true),
 };
 Object.values(ceilingGroups).forEach(g => root.add(g));
 ceilingGroups.scis45.visible = false;
 ceilingGroups.open30.visible = false;
+ceilingGroups.open30wide.visible = false;
 
 window.setCeiling = (key) => {
+  isWideMode = (key === 'open30wide');
+  bundle435.visible = !isWideMode;
+  bundle500.visible = isWideMode;
   for (const [k, g] of Object.entries(ceilingGroups)) g.visible = (k === key);
   document.querySelectorAll('#ceil-btns button').forEach(b => b.classList.toggle('active', b.dataset.c === key));
+  resolveCircleAABBs();
 };
 
 // ---------------------------------------------------------------------------
-// Furnished Master Bedroom + AC-1 Above Wardrobe
+// Furnished Master Bedroom + AC-1 Above Wardrobe (4.35 m vs 5.00 m bundles)
 // ---------------------------------------------------------------------------
-addHouseBox(root, -3.90, 0.85, 0.002, -1.35, 3.55, 0.014, matRug, false, true);
-addHouseBox(root, XW_IN, 1.26, 0.00, XW_IN + 0.11, 3.16, 1.18, matHeadboard);
-addHouseBox(root, XW_IN + 0.11, 1.31, 0.04, XW_IN + 2.10, 3.11, 0.30, matOakJoinery);
-addHouseBox(root, XW_IN + 0.13, 1.34, 0.30, XW_IN + 2.08, 3.08, 0.54, matAppliance);
-addHouseBox(root, XW_IN + 0.60, 1.32, 0.33, XW_IN + 2.10, 3.10, 0.58, matLinenDuvet);
-for (const [py1, py2] of [[1.42, 2.14], [2.28, 3.00]]) {
-  addHouseBox(root, XW_IN + 0.16, py1, 0.54, XW_IN + 0.52, py2, 0.70, matAppliance);
-  addHouseBox(root, XW_IN + 0.42, py1 + 0.05, 0.55, XW_IN + 0.72, py2 - 0.05, 0.69, matHeadboard);
+function buildMasterBedroomBundle(parent, xW) {
+  addHouseBox(parent, xW + 0.08, 0.85, 0.002, -1.35, 3.55, 0.014, matRug, false, true);
+  addHouseBox(parent, xW, 1.26, 0.00, xW + 0.11, 3.16, 1.18, matHeadboard);
+  addHouseBox(parent, xW + 0.11, 1.31, 0.04, xW + 2.10, 3.11, 0.30, matOakJoinery);
+  addHouseBox(parent, xW + 0.13, 1.34, 0.30, xW + 2.08, 3.08, 0.54, matAppliance);
+  addHouseBox(parent, xW + 0.60, 1.32, 0.33, xW + 2.10, 3.10, 0.58, matLinenDuvet);
+  for (const [py1, py2] of [[1.42, 2.14], [2.28, 3.00]]) {
+    addHouseBox(parent, xW + 0.16, py1, 0.54, xW + 0.52, py2, 0.70, matAppliance);
+    addHouseBox(parent, xW + 0.42, py1 + 0.05, 0.55, xW + 0.72, py2 - 0.05, 0.69, matHeadboard);
+  }
+  for (const ny of [0.98, 3.44]) {
+    addHouseBox(parent, xW + 0.01, ny - 0.22, 0.36, xW + 0.43, ny + 0.22, 0.50, matOakJoinery);
+    addHouseBox(parent, xW + 0.01, ny - 0.05, 0.95, xW + 0.11, ny + 0.05, 1.18, matBrass);
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), matEmissiveWarm);
+    globe.position.set(xW + 0.14, 1.10, -ny);
+    parent.add(globe);
+  }
+  addHouseBox(parent, xW, 4.13, 0.00, -1.34, 4.73, 2.38, matSageJoinery);
+  const nMod = xW < -4.4 ? 5 : 4;
+  const wMod = (-1.34 - xW) / nMod;
+  for (let i = 0; i < nMod; i++) {
+    const wx1 = xW + 0.015 + i * wMod, wx2 = wx1 + wMod - 0.025;
+    addHouseBox(parent, wx1, 4.115, 0.04, wx2, 4.13, 2.34, matSageJoinery);
+    addHouseBox(parent, wx2 - 0.06, 4.095, 0.92, wx2 - 0.035, 4.115, 1.32, matOakJoinery);
+  }
+  const xAc = (xW - 1.34) / 2.0;
+  addHouseBox(parent, xAc - 0.40, 4.50, 2.42, xAc + 0.40, 4.73, 2.69, matAppliance);
+  addHouseBox(parent, xAc - 0.36, 4.49, 2.435, xAc + 0.36, 4.505, 2.465, matBlackMetal);
 }
 const matEmissiveWarm = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xffb454, emissiveIntensity: 0.4, roughness: 0.3 });
-for (const ny of [0.98, 3.44]) {
-  addHouseBox(root, XW_IN + 0.01, ny - 0.22, 0.36, XW_IN + 0.43, ny + 0.22, 0.50, matOakJoinery);
-  addHouseBox(root, XW_IN + 0.01, ny - 0.05, 0.95, XW_IN + 0.11, ny + 0.05, 1.18, matBrass);
-  const globe = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), matEmissiveWarm);
-  globe.position.set(XW_IN + 0.14, 1.10, -ny);
-  root.add(globe);
-}
-
-// Built-in 2.645 x 0.60 m Acoustic Buffer Wardrobe (X=-3.985..-1.34, Y=4.13..4.73, Z=0..2.38 m)
-addHouseBox(root, XW_IN, 4.13, 0.00, -1.34, 4.73, 2.38, matSageJoinery);
-const wMod = (-1.34 - XW_IN) / 4;
-for (let i = 0; i < 4; i++) {
-  const wx1 = XW_IN + 0.015 + i * wMod, wx2 = wx1 + wMod - 0.025;
-  addHouseBox(root, wx1, 4.115, 0.04, wx2, 4.13, 2.34, matSageJoinery);
-  addHouseBox(root, wx2 - 0.06, 4.095, 0.92, wx2 - 0.035, 4.115, 1.32, matOakJoinery);
-}
-// AC-1: Master Bedroom Wall-Mounted Unit high above Wardrobe (X=-2.65, Y=4.73, Z=2.48 m) blowing South!
-addHouseBox(root, -3.05, 4.50, 2.42, -2.25, 4.73, 2.69, matAppliance);
-addHouseBox(root, -3.01, 4.49, 2.435,-2.29, 4.505,2.465, matBlackMetal); // Whisper-quiet 19 dB(A) discharge vane
+buildMasterBedroomBundle(bundle435, XW_IN);
+buildMasterBedroomBundle(bundle500, XW_500);
 // Directional TL-MB Dysdon Nozzle Diffuser above Sluss Bedroom Door
 addHouseBox(root, -0.72, 3.17, 2.24, -0.38, 3.20, 2.36, matAppliance);
 
 // ---------------------------------------------------------------------------
-// Redesigned Open-Entry Spa Bathroom & 2.425 m Bifold Laundry
+// Redesigned Open-Entry Spa Bathroom & Bifold Laundry (4.35 m Stacked vs 5.00 m Side-by-Side)
 // ---------------------------------------------------------------------------
-const matWallTile = createLimestoneTilePBR(2.0, 1.2);
-// Wet-zone limestone wall tiling (cut around North Clerestory Window X=-3.85..-2.05, Z=1.85..2.35!)
-addHouseBox(root, XW_IN, 6.90, 0.00, XW_IN + 0.025, YN_IN, 2.50, matWallTile);
-addHouseBox(root, XW_IN, YN_IN - 0.025, 0.00, -3.85, YN_IN, 2.50, matWallTile);
-addHouseBox(root, -2.05, YN_IN - 0.025, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
-addHouseBox(root, -3.85, YN_IN - 0.025, 0.00, -2.05, YN_IN, 1.85, matWallTile);
-addHouseBox(root, -3.85, YN_IN - 0.025, 2.35, -2.05, YN_IN, 2.50, matWallTile);
+// Wet-zone limestone wall tiling (4.35 m + 5.00 m north/west walls)
+addHouseBox(bundle435, XW_IN, 6.90, 0.00, XW_IN + 0.025, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle435, XW_IN, YN_IN - 0.025, 0.00, -3.85, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle435, -2.05, YN_IN - 0.025, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle435, -3.85, YN_IN - 0.025, 0.00, -2.05, YN_IN, 1.85, matWallTile);
+addHouseBox(bundle435, -3.85, YN_IN - 0.025, 2.35, -2.05, YN_IN, 2.50, matWallTile);
+
+addHouseBox(bundle500, XW_500, 6.90, 0.00, XW_500 + 0.025, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle500, XW_500, YN_IN - 0.025, 0.00, -4.50, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle500, -2.50, YN_IN - 0.025, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
+addHouseBox(bundle500, -4.50, YN_IN - 0.025, 0.00, -2.50, YN_IN, 1.85, matWallTile);
+addHouseBox(bundle500, -4.50, YN_IN - 0.025, 2.35, -2.50, YN_IN, 2.50, matWallTile);
 addHouseBox(root, XE_PROT_IN - 0.025, 7.53, 0.00, XE_PROT_IN, YN_IN, 2.50, matWallTile);
 
 // 1. East Floating 130 cm Ribbed-Oak Double Vanity FLUSH against Preserved 1957 Red-Brick Wall (Y=6.20..7.50, X=-0.50..0.00)
@@ -651,64 +735,81 @@ for (const vy of [6.52, 7.18]) {
   addHouseBox(root, -0.040, vy - 0.24, 1.20, -0.020, vy + 0.24, 2.02, matMirror, false, false);
 }
 
-// 2. NW Corner 170 x 80 cm Bathtub directly beneath the 180 x 50 cm North Clerestory Window (X=-3.95..-2.25, Y=8.15..8.95)
-addHouseBox(root, -3.95, 8.15, 0.00, -2.25, 8.95, 0.58, matCeramic);
-addHouseBox(root, -3.83, 8.25, 0.44, -2.37, 8.85, 0.59, new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.12 }));
-addHouseBox(root, -3.12, 8.89, 0.58, -3.08, 8.93, 0.74, matBrass);
+// 2. NW Corner 170 x 80 cm Bathtub (4.35 m vs 5.00 m)
+function buildTubAndWc(parent, xW) {
+  addHouseBox(parent, xW + 0.035, 8.15, 0.00, xW + 1.735, 8.95, 0.58, matCeramic);
+  addHouseBox(parent, xW + 0.155, 8.25, 0.44, xW + 1.615, 8.85, 0.59, new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.12 }));
+  addHouseBox(parent, xW + 0.865, 8.89, 0.58, xW + 0.905, 8.93, 0.74, matBrass);
+  addHouseBox(parent, xW, 6.95, 0.00, xW + 0.185, 8.10, 1.15, matWallTile);
+  addHouseBox(parent, xW, 6.94, 1.14, xW + 0.195, 8.11, 1.17, matCeramic);
+  addHouseBox(parent, xW + 0.185, 7.21, 0.10, xW + 0.635, 7.59, 0.42, matCeramic);
+  addHouseBox(parent, xW + 0.225, 7.20, 0.42, xW + 0.645, 7.60, 0.45, matCeramic);
+  addHouseBox(parent, xW + 0.180, 7.29, 0.88, xW + 0.200, 7.51, 1.03, matBrass);
+}
+buildTubAndWc(bundle435, XW_IN);
+buildTubAndWc(bundle500, XW_500);
 
-// 3. NE Corner Walk-In Rain Shower (100 x 135 cm, X=-1.36..-0.365, Y=7.62..8.965) + 65W Brass Towel Warmer
-addHouseBox(root, -1.37, 7.98, 0.00, -1.34, YN_IN, 2.10, matGlass, false, false);
-addHouseBox(root, -1.38, 7.98, 2.08, -1.33, YN_IN, 2.11, matBrass);
+// 3. NE Corner Walk-In Rain Shower + Fixed Full-Height Waterproof Partition at Y=7.62 (BBV Zone 1!) + 65W Brass Towel Warmer
+addHouseBox(root, -0.90, 7.60, 0.00, -0.365, 7.65, 2.50, matWallTile);
+addHouseBox(root, -1.37, 8.10, 0.00, -1.34, YN_IN, 2.10, matGlass, false, false);
+addHouseBox(root, -1.38, 8.10, 2.08, -1.33, YN_IN, 2.11, matBrass);
 addHouseBox(root, XE_PROT_IN - 0.06, 8.27, 1.05, XE_PROT_IN - 0.02, 8.33, 2.18, matBrass);
 addHouseBox(root, XE_PROT_IN - 0.42, 8.17, 2.16, XE_PROT_IN - 0.04, 8.43, 2.19, matBrass);
-// Electric Towel Warmer (65W) on North Pier (X=-1.82..-1.62, Y=8.93) between Bathtub & Shower
 addHouseBox(root, -1.82, 8.91, 0.78, -1.79, 8.95, 1.75, matBrass);
 addHouseBox(root, -1.65, 8.91, 0.78, -1.62, 8.95, 1.75, matBrass);
 for (let tr = 0; tr < 5; tr++) {
   addHouseBox(root, -1.82, 8.90, 0.90 + tr * 0.18, -1.62, 8.93, 0.92 + tr * 0.18, matBrass);
 }
 
-// 4. Repositioned Private West Wall-Hung WC at Y=7.40 (X=-3.985..-3.35, Y=7.05..7.75) on 1.15 m West Ledge (Y=6.95..8.10)
-addHouseBox(root, XW_IN, 6.95, 0.00, -3.80, 8.10, 1.15, matWallTile);
-addHouseBox(root, XW_IN, 6.94, 1.14, -3.79, 8.11, 1.17, matCeramic);
-addHouseBox(root, -3.80, 7.21, 0.10, -3.35, 7.59, 0.42, matCeramic);
-addHouseBox(root, -3.76, 7.20, 0.42, -3.34, 7.60, 0.45, matCeramic);
-addHouseBox(root, -3.805, 7.29, 0.88, -3.785, 7.51, 1.03, matBrass); // Geberit Sigma flush plate
+// 5. Concealed Bifold Laundry Alcove: 4.35 m Stacked (2.425 m) vs 5.00 m Side-by-Side (3.075 m)
+addHouseBox(root, -1.56, 4.95, 0.00, -1.48, 5.67, 2.50, matPlaster);
+addHouseBox(bundle435, XW_IN, 5.62, 2.18, -1.48, 5.68, 2.50, matPlaster);
+addHouseBox(bundle500, XW_500, 5.62, 2.18, -1.48, 5.68, 2.50, matPlaster);
 
-// 5. Shortened 2.425 m Concealed Laundry Alcove (X=-3.985..-1.56, Y=4.95..5.65, cheek wall X=-1.56..-1.48):
-//    60x60 TS VP (-3.96..-3.36) + Stacked TM+TT (-3.34..-2.74) + 1.16 m Sink/Counter & UFH cab (-2.72..-1.56)
-addHouseBox(root, -1.56, 4.95, 0.00, -1.48, 5.67, 2.50, matPlaster); // Cheek wall
-addHouseBox(root, XW_IN, 5.62, 2.18, -1.48, 5.68, 2.50, matPlaster); // Bifold header
-// 60x60 Heat-Pump Drying Cabinet (TS VP) on West (-3.96..-3.36)
-addHouseBox(root, -3.96, 4.98, 0.00, -3.36, 5.58, 1.95, matAppliance);
-addHouseBox(root, -3.76, 5.58, 1.82, -3.56, 5.595, 1.88, matBlackMetal);
-addHouseBox(root, -3.42, 5.58, 0.90, -3.39, 5.61, 1.35, matBlackMetal);
-// Stacked TM + TT Column (60x60 at -3.34..-2.74)
-addHouseBox(root, -3.34, 4.98, 0.00, -2.74, 5.58, 0.85, matAppliance); // TM bottom
-addHouseBox(root, -3.34, 4.98, 0.85, -2.74, 5.60, 0.89, matOakJoinery); // Pull-out oak folding shelf
-addHouseBox(root, -3.34, 4.98, 0.89, -2.74, 5.58, 1.74, matAppliance); // TT top
+// 4.35 m Stacked Laundry
+addHouseBox(bundle435, -3.96, 4.98, 0.00, -3.36, 5.58, 1.95, matAppliance);
+addHouseBox(bundle435, -3.76, 5.58, 1.82, -3.56, 5.595, 1.88, matBlackMetal);
+addHouseBox(bundle435, -3.42, 5.58, 0.90, -3.39, 5.61, 1.35, matBlackMetal);
+addHouseBox(bundle435, -3.34, 4.98, 0.00, -2.74, 5.58, 0.85, matAppliance);
+addHouseBox(bundle435, -3.34, 4.98, 0.85, -2.74, 5.60, 0.89, matOakJoinery);
+addHouseBox(bundle435, -3.34, 4.98, 0.89, -2.74, 5.58, 1.74, matAppliance);
 for (const dz of [0.46, 1.34]) {
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 24), matBlackMetal);
   drum.rotation.x = Math.PI / 2;
   drum.position.set(-3.04, dz, -5.585);
-  root.add(drum);
+  bundle435.add(drum);
 }
-// 1.16 m Laundry Sink + Oak Folding Counter + Säker Vatten Secondary UFH Cabinet underneath (-2.72..-1.56)
+// 5.00 m Side-by-Side Laundry (NO stacking!)
+addHouseBox(bundle500, -4.61, 4.98, 0.00, -4.01, 5.58, 1.95, matAppliance);
+addHouseBox(bundle500, -4.41, 5.58, 1.82, -4.21, 5.595, 1.88, matBlackMetal);
+addHouseBox(bundle500, -4.07, 5.58, 0.90, -4.04, 5.61, 1.35, matBlackMetal);
+addHouseBox(bundle500, -3.99, 4.98, 0.00, -3.39, 5.58, 0.85, matAppliance);
+addHouseBox(bundle500, -3.37, 4.98, 0.00, -2.77, 5.58, 0.85, matAppliance);
+addHouseBox(bundle500, -3.99, 4.96, 0.85, -2.75, 5.61, 0.89, matOakJoinery);
+for (const dx of [-3.69, -3.07]) {
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 24), matBlackMetal);
+  drum.rotation.x = Math.PI / 2;
+  drum.position.set(dx, 0.46, -5.585);
+  bundle500.add(drum);
+}
+
+// Shared 1.16 m / 1.20 m Laundry Sink + Oak Folding Counter + Säker Vatten Secondary UFH Cabinet underneath
 addHouseBox(root, -2.72, 4.98, 0.00, -1.57, 5.58, 0.85, matSageJoinery);
-addHouseBox(root, -2.44, 5.58, 0.08, -1.86, 5.595, 0.68, matAppliance); // Säker Vatten UFH manifold access hatch
-addHouseBox(root, -2.73, 4.96, 0.85, -1.56, 5.61, 0.89, matOakJoinery); // 1.16 m oak counter
-addHouseBox(root, -2.12, 5.08, 0.89, -1.68, 5.48, 0.905, matBlackMetal); // Inset laundry sink
+addHouseBox(root, -2.44, 5.58, 0.08, -1.86, 5.595, 0.68, matAppliance);
+addHouseBox(root, -2.73, 4.96, 0.85, -1.56, 5.61, 0.89, matOakJoinery);
+addHouseBox(root, -2.12, 5.08, 0.89, -1.68, 5.48, 0.905, matBlackMetal);
 addHouseBox(root, -1.90, 5.02, 0.89, -1.87, 5.05, 1.14, matBrass);
-addHouseBox(root, -2.72, 4.98, 1.48, -1.57, 5.32, 1.52, matOakJoinery); // Upper detergent/linen shelf
+addHouseBox(root, -2.72, 4.98, 1.48, -1.57, 5.32, 1.52, matOakJoinery);
 
 // ---------------------------------------------------------------------------
 // Interactive Animated Doors (Bedroom 9M, Bathroom West Pocket 9M, 4-Leaf Bifold Laundry, 2.10m Patio Slider)
 // ---------------------------------------------------------------------------
 const doorState = { bed: true, bath: true, laundry: false, patio: false };
 
-// 1. Bedroom 9M Acoustic Door (pivots at X=-0.18, Y=3.28)
+// 1. Bedroom 9M Acoustic Door (pivots at X=-0.18, Y=3.28; +PI*0.47 swings South INTO Master Bedroom flush against 1957 brick wall)
 const bedDoorPivot = new THREE.Group();
 bedDoorPivot.position.set(-0.18, 0, -3.28);
+bedDoorPivot.rotation.y = Math.PI * 0.47;
 root.add(bedDoorPivot);
 addHouseBox(bedDoorPivot, -0.90, -0.02, 0.01, 0.00, 0.02, 2.09, matOakJoinery);
 addHouseBox(bedDoorPivot, -0.82, -0.04, 0.98, -0.74, 0.04, 1.02, matBrass);
@@ -872,14 +973,15 @@ const STATIC_COLLIDERS = [
   { x1: XW_IN, y1: 3.22, x2: XW_IN + 0.44, y2: 3.66, tag: 'nightstand_n' },
   { x1: XW_IN, y1: 4.13, x2: -1.34,        y2: 4.73, tag: 'wardrobe' },
 
-  // 6. Redesigned Spa Bathroom & 2.425 m Laundry Fixtures
+  // 6. Redesigned Spa Bathroom & Laundry Fixtures (+ Fixed Y=7.62 Shower Partition)
   { x1: XW_IN, y1: 4.95, x2: -1.56, y2: 5.66, tag: 'laundry_alcove' },
   { x1: -1.56, y1: 4.95, x2: -1.48, y2: 5.67, tag: 'laundry_cheek' },
   { x1: -0.50, y1: 6.20, x2: 0.00,  y2: 7.50, tag: 'double_vanity' },
   { x1: XW_IN, y1: 6.95, x2: -3.80, y2: 8.10, tag: 'wc_ledge' },
   { x1: -3.80, y1: 7.21, x2: -3.35, y2: 7.59, tag: 'wc_bowl' },
   { x1: XW_IN, y1: 8.15, x2: -2.25, y2: YN_IN, tag: 'bathtub' },
-  { x1: -1.38, y1: 7.98, x2: -1.33, y2: YN_IN, tag: 'shower_glass' },
+  { x1: -0.92, y1: 7.58, x2: -0.36, y2: 7.67, tag: 'shower_partition_s' },
+  { x1: -1.38, y1: 8.10, x2: -1.33, y2: YN_IN, tag: 'shower_glass' },
 
   // 7. Existing Open Corridor & Kontor Context (8M Kontor doorway X=1.035..1.835 = 0.80 m clear)
   { x1: 0.25,  y1: 3.05, x2: 5.15,  y2: 3.23, tag: 'allrum_n' },
@@ -891,8 +993,21 @@ const STATIC_COLLIDERS = [
   { x1: 0.25,  y1: 7.38, x2: 5.15,  y2: 7.60, tag: 'kontor_n' },
 ];
 
+const COLLIDERS_500 = STATIC_COLLIDERS.map(b => {
+  if (b.tag === 'ext_west') return { ...b, x1: -5.20, x2: XW_500 };
+  if (b.tag === 'ext_south_w') return { ...b, x1: -5.20, x2: -2.90 };
+  if (b.tag === 'ext_south_e') return { ...b, x1: -1.85 };
+  if (b.tag === 'king_bed') return { ...b, x1: XW_500, x2: XW_500 + 2.10 };
+  if (b.tag === 'nightstand_s' || b.tag === 'nightstand_n') return { ...b, x1: XW_500, x2: XW_500 + 0.44 };
+  if (b.tag === 'wardrobe' || b.tag === 'laundry_alcove') return { ...b, x1: XW_500 };
+  if (b.tag === 'wc_ledge') return { ...b, x1: XW_500, x2: XW_500 + 0.185 };
+  if (b.tag === 'wc_bowl') return { ...b, x1: XW_500 + 0.185, x2: XW_500 + 0.635 };
+  if (b.tag === 'bathtub') return { ...b, x1: XW_500, x2: XW_500 + 1.735 };
+  return b;
+});
+
 function getActiveColliders() {
-  const list = STATIC_COLLIDERS.slice();
+  const list = (isWideMode ? COLLIDERS_500 : STATIC_COLLIDERS).slice();
   if (!doorState.bed) {
     list.push({ x1: -1.08, y1: 3.22, x2: -0.18, y2: 3.34, tag: 'door_bed_closed' });
   } else {
@@ -902,10 +1017,12 @@ function getActiveColliders() {
     list.push({ x1: -1.08, y1: 4.78, x2: -0.18, y2: 4.90, tag: 'door_bath_closed' });
   }
   if (!doorState.patio) {
-    list.push({ x1: -2.57, y1: 0.10, x2: -1.52, y2: 0.28, tag: 'door_patio_closed' });
+    list.push(isWideMode
+      ? { x1: -2.90, y1: 0.10, x2: -1.85, y2: 0.28, tag: 'door_patio_closed' }
+      : { x1: -2.57, y1: 0.10, x2: -1.52, y2: 0.28, tag: 'door_patio_closed' });
   }
   if (doorState.laundry) {
-    list.push({ x1: XW_IN, y1: 5.65, x2: -3.86, y2: 6.26, tag: 'bifold_w_open' });
+    list.push({ x1: (isWideMode ? XW_500 : XW_IN), y1: 5.65, x2: (isWideMode ? -4.50 : -3.86), y2: 6.26, tag: 'bifold_w_open' });
     list.push({ x1: -1.68, y1: 5.65, x2: -1.52, y2: 6.26, tag: 'bifold_e_open' });
   }
   return list;
@@ -923,12 +1040,12 @@ function minDistToAABBs(hx, hy, colliders) {
 }
 
 // ---------------------------------------------------------------------------
-// 9 Verified Teleport Viewpoints (Every Point Strictly > 0.30 m From Any AABB!)
+// 9 Verified Teleport Viewpoints (Every Point Strictly > 0.30 m From Any AABB in BOTH 4.35 m & 5.00 m!)
 // ---------------------------------------------------------------------------
 const VIEWPOINTS = {
   bedside:    { hx: -0.95, hy: 2.21, yaw:  1.52, pitch: -0.02 },
-  brick:      { hx: -2.85, hy: 0.85, yaw: -0.95, pitch:  0.14 },
-  pergola:    { hx: -2.05, hy: 0.82, yaw:  3.14, pitch: -0.04, openPatio: true },
+  brick:      { hx: -2.20, hy: 0.85, yaw: -0.95, pitch:  0.14 },
+  pergola:    { hx: -2.10, hy: 0.88, yaw:  3.14, pitch: -0.04 },
   sluss:      { hx: -0.59, hy: 4.04, yaw:  2.45, pitch: -0.04 },
   spa_entry:  { hx: -0.78, hy: 5.45, yaw:  0.38, pitch:  0.04 },
   spa_center: { hx: -2.15, hy: 6.65, yaw: -0.45, pitch: -0.03 },
@@ -937,16 +1054,17 @@ const VIEWPOINTS = {
   corridor:   { hx:  2.15, hy: 3.84, yaw:  1.57, pitch:  0.03 },
 };
 
-// Startup QA Self-Check: assert all viewpoints > 0.30 m from any obstacle AABB
+// Startup QA Self-Check: assert all viewpoints > 0.30 m from any obstacle AABB in BOTH widths
 for (const [vid, vpObj] of Object.entries(VIEWPOINTS)) {
-  const dClear = minDistToAABBs(vpObj.hx, vpObj.hy, STATIC_COLLIDERS);
-  console.assert(dClear > 0.30, `Viewpoint ${vid} clearance ${dClear.toFixed(3)} m <= 0.30 m!`);
+  const d435 = minDistToAABBs(vpObj.hx, vpObj.hy, STATIC_COLLIDERS);
+  const d500 = minDistToAABBs(vpObj.hx, vpObj.hy, COLLIDERS_500);
+  console.assert(d435 > 0.30 && d500 > 0.30, `Viewpoint ${vid} clearance 4.35=${d435.toFixed(3)} / 5.00=${d500.toFixed(3)} <= 0.30 m!`);
 }
 
-let posHX = -2.85, posHY = 0.85, camYaw = -0.95, camPitch = 0.12;
+let posHX = -2.20, posHY = 0.85, camYaw = -0.95, camPitch = 0.12;
 
 function resolveCircleAABBs() {
-  posHX = Math.max(-4.52, Math.min(4.82, posHX));
+  posHX = Math.max(isWideMode ? -4.85 : -4.52, Math.min(4.82, posHX));
   posHY = Math.max(-3.52, Math.min(8.92, posHY));
   const colliders = getActiveColliders();
   for (let iter = 0; iter < 5; iter++) {
@@ -990,9 +1108,9 @@ function detectRoomName(hx, hy) {
   if (hy < 0.22) return 'Uteplats & Pergola (Syd)';
   if (hx > 0.20 && hy > 4.50) return 'Kontor (6,7 m²)';
   if (hx > 0.15) return 'Öppen Korridor (1,18 m · AC-2)';
-  if (hy > 4.85) return 'Spa-Badrum & Vikdörrstvätt (15,4 m²)';
+  if (hy > 4.85) return isWideMode ? 'Spa-Badrum & Sid-vid-sid Tvätt (18,1 m²)' : 'Spa-Badrum & Vikdörrstvätt (15,4 m²)';
   if (hx > -1.25 && hy > 3.28) return 'Sluss / Passage (1,6 m²)';
-  return 'Master Sovrum (13,8 m² · 365mm Ytong)';
+  return isWideMode ? 'Master Sovrum (16,2 m² · 5,00 m Ytong)' : 'Master Sovrum (13,8 m² · 365mm Ytong)';
 }
 
 // ---------------------------------------------------------------------------
@@ -1093,8 +1211,8 @@ function tick(now) {
   const dt = Math.min(0.05, (now - prevT) / 1000);
   prevT = now;
 
-  // Smooth door animations
-  const targetBedRot = doorState.bed ? -Math.PI * 0.47 : 0.0;
+  // Smooth door animations (+Math.PI*0.47 swings bedroom 9M door South INTO Master Bedroom flush against 1957 brick wall)
+  const targetBedRot = doorState.bed ? Math.PI * 0.47 : 0.0;
   bedDoorPivot.rotation.y += (targetBedRot - bedDoorPivot.rotation.y) * Math.min(1, dt * 8);
 
   const targetBathX = doorState.bath ? -0.84 : 0.0;
@@ -1111,9 +1229,10 @@ function tick(now) {
   bifoldEastRoot.rotation.y += (targetBERoot - bifoldEastRoot.rotation.y) * Math.min(1, dt * 7);
   bifoldEastInner.rotation.y += (targetBEInner - bifoldEastInner.rotation.y) * Math.min(1, dt * 7);
 
-  // 2.10 m South Lift-and-Slide Door Leaf
-  const targetPatioX = doorState.patio ? -0.98 : 0.0;
-  patioSliderLeaf.position.x += (targetPatioX - patioSliderLeaf.position.x) * Math.min(1, dt * 6);
+  // 2.10 m South Lift-and-Slide Door Leaf (full -1.00 m slide on proud interior track)
+  const targetPatioX = doorState.patio ? -1.00 : 0.0;
+  patioSliderLeaf435.position.x += (targetPatioX - patioSliderLeaf435.position.x) * Math.min(1, dt * 6);
+  patioSliderLeaf500.position.x += (targetPatioX - patioSliderLeaf500.position.x) * Math.min(1, dt * 6);
 
   // Walking velocity -> Circle-vs-AABB slide
   let fwd = 0, str = 0;
